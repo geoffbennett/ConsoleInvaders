@@ -139,12 +139,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConsoleInvaders.cpp" />
+    <ClCompile Include="console_screen.cpp" />
+    <ClCompile Include="game_object.cpp" />
     <ClCompile Include="game_timer.cpp" />
     <ClCompile Include="keyboard.cpp" />
+    <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="console_screen.h" />
+    <ClInclude Include="game_object.h" />
     <ClInclude Include="game_timer.h" />
     <ClInclude Include="keyboard.h" />
+    <ClInclude Include="player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
