@@ -824,11 +824,11 @@ void mode_game_play(const float elapsed, const int fps)
 	game_process_enemies(elapsed);
 	game_process_enemy_bullet(elapsed);
 
+	game_draw_bunkers();
 	game_draw_player();
 	game_draw_bullet();
 	game_draw_enemies();
 	game_draw_enemy_bullets();
-	game_draw_bunkers();
 	game_draw_ground();
 
 	game_draw_hud(fps);
