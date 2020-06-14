@@ -19,8 +19,8 @@ enum class e_mode
 
 struct enemy
 {
-	int pos_x = 0;
-	int pos_y = 0;
+	float x = 0.0f;
+	float y = 0.0f;
 	wchar_t chr = 0;
 	int points = 0;
 	bool remove = false;
@@ -28,16 +28,16 @@ struct enemy
 
 struct enemy_bullet
 {
-	int pos_x = 0;
-	int pos_y = 0;
+	float x = 0;
+	float y = 0;
 	wchar_t chr = 0;
 	bool remove = false;
 };
 
 struct bunker
 {
-	int pos_x = 0;
-	int pos_y = 0;
+	float x = 0.0f;
+	float y = 0.0f;
 	wstring shape;
 };
 
@@ -67,16 +67,14 @@ auto b_key_quit = false;
 auto b_key_start = false;
 
 // Player
-auto n_player_row = n_screen_height - 4;
-auto n_player_pos = n_screen_width / 2;
+auto f_player_speed = 30.0f;
+auto f_player_row = static_cast<float>(n_screen_height - 4.0f);
+auto f_player_pos = static_cast<float>(n_screen_width / 2.0f);
 auto b_player_shooting = false;
-auto n_player_speed_count = 0;
-auto n_player_speed_delta = 200;
 
-auto n_bullet_x = 0;
-auto n_bullet_y = 0;
-auto n_bullet_speed_count = 0;
-auto n_bullet_speed_delta = 50;
+auto f_bullet_x = 0.0f;
+auto f_bullet_y = 0.0f;
+auto f_bullet_speed = 30.0f;
 
 const short n_chr_player = 0x2569;
 const short n_chr_player_explosion = 0x0023;
@@ -87,12 +85,10 @@ auto n_current_player_chr = n_chr_player;
 // Enemies
 vector<enemy> enemies;
 vector<enemy_bullet> enemy_bullets;
-auto enemy_dir = 1;
-auto n_enemy_speed_count = 0;
-auto n_enemy_speed_delta = 1200;
+auto f_enemy_speed = 2.0f;
 auto n_enemies_killed = 0;
-auto n_enemy_speed_mod = 10;
-auto n_enemy_speed_adjustment = 150;
+auto n_enemy_speed_increase_threshold = 10;
+auto n_enemy_speed_adjustment = 3.0f;
 auto b_enemy_shooting = false;
 auto n_enemy_shot_wait = 0;
 auto n_enemy_shot_reset = 5;
@@ -119,7 +115,7 @@ const short n_000_pc = 0x0020;
 vector<bunker> bunkers;
 const auto n_bunker_width = 5;
 const auto n_bunker_height = 4;
-const auto n_bunker_y = n_screen_height - 10;
+const auto f_bunker_y = static_cast<float>(n_screen_height) - 10.0f;
 const auto n_bunker_1_x = 15;
 const auto n_bunker_2_x = 30;
 const auto n_bunker_3_x = 45;
@@ -183,30 +179,42 @@ void buffer_present()
 	for (auto i = 0; i < n_screen_width * n_screen_height; i++) screen[i] = buffer[i];
 }
 
-void buffer_plot_char(const int x, const int y, const wchar_t chr)
+void buffer_clip(float& x, float& y)
 {
-	buffer[y * n_screen_width + x] = chr;
+	if (x < 0.0f) x = 0.0f;
+	if (static_cast<int>(x) > n_screen_width - 1) x = static_cast<float>(n_screen_width) - 1.0f;
+
+	if (y < 0.0f) y = 0.0f;
+	if (static_cast<int>(y) > n_screen_height) y = static_cast<float>(n_screen_height);
 }
 
-void buffer_draw_text(const int x, const int y, const size_t size, const wchar_t* fmt, ...)
+void buffer_plot_char(float x, float y, const wchar_t chr)
 {
+	buffer_clip(x, y);
+	buffer[static_cast<int>(y) * n_screen_width + static_cast<int>(x)] = chr;
+}
+
+void buffer_draw_text(float x, float y, const size_t size, const wchar_t* fmt, ...)
+{
+	buffer_clip(x, y);
 	va_list my_args;
 	va_start(my_args, fmt);
-	vswprintf_s(&buffer[y * n_screen_width + x], size, fmt, my_args);
+	vswprintf_s(&buffer[static_cast<int>(y) * n_screen_width + static_cast<int>(x)], size, fmt, my_args);
 	va_end(my_args);
 }
 
-void buffer_draw_text_v(const int x, const int y, const size_t size, const wchar_t* fmt, va_list args)
+void buffer_draw_text_v(float x, float y, const size_t size, const wchar_t* fmt, va_list args)
 {
-	vswprintf_s(&buffer[y * n_screen_width + x], size, fmt, args);
+	buffer_clip(x, y);
+	vswprintf_s(&buffer[static_cast<int>(y) * n_screen_width + static_cast<int>(x)], size, fmt, args);
 }
 
-void buffer_draw_text_hc(const int y, const size_t size, const wchar_t* fmt, ...)
+void buffer_draw_text_hc(float y, const size_t size, const wchar_t* fmt, ...)
 {
 	va_list my_args;
 	va_start(my_args, fmt);
-	const auto n_left = static_cast<int>(n_screen_width - size) / 2;
-	buffer_draw_text_v(n_left, y, size, fmt, my_args);
+	const auto f_left = static_cast<float>(n_screen_width - size) / 2.0f;
+	buffer_draw_text_v(f_left, y, size, fmt, my_args);
 	va_end(my_args);
 }
 
@@ -244,9 +252,18 @@ void input_handle_stats_toggle()
 
 // === GAME ===
 
-void game_initialise_enemies(const int start_pos)
+bool pos_cmp(const float f1, const float f2)
 {
-	const auto start_x = 10;
+	// we don't deal with negative screen space, so we should be
+	// able to use math to compare two floats to save the cost of
+	// casting to an integer, but I don't know if that would be
+	// faster. Need to experiment.
+	return static_cast<int>(f1) == static_cast<int>(f2);
+}
+
+void game_initialise_enemies(const float start_pos)
+{
+	const auto start_x = 10.0f;
 	for (auto r = 0; r < 5; r++)
 	{
 		for (auto c = 0; c < 11; c++)
@@ -254,14 +271,14 @@ void game_initialise_enemies(const int start_pos)
 			switch (r)
 			{
 			case 0:
-				enemies.push_back({ start_x + c * 4, start_pos + r * 2, L'^', 30 });
+				enemies.push_back({ start_x + static_cast<float>(c) * 4, start_pos + static_cast<float>(r) * 2, L'^', 30 });
 				break;
 			case 1:
 			case 2:
-				enemies.push_back({ start_x + c * 4, start_pos + r * 2, L'H', 20 });
+				enemies.push_back({ start_x + static_cast<float>(c) * 4, start_pos + static_cast<float>(r) * 2, L'H', 20 });
 				break;
 			default:
-				enemies.push_back({ start_x + c * 4, start_pos + r * 2, L'M', 10 });
+				enemies.push_back({ start_x + static_cast<float>(c) * 4, start_pos + static_cast<float>(r) * 2, L'M', 10 });
 				break;
 			}
 		}
@@ -271,8 +288,8 @@ void game_initialise_enemies(const int start_pos)
 void game_initialise_bunkers()
 {
 	bunker b1;
-	b1.pos_y = n_bunker_y;
-	b1.pos_x = n_bunker_1_x;
+	b1.y = f_bunker_y;
+	b1.x = n_bunker_1_x;
 	b1.shape.append(L".444.");
 	b1.shape.append(L"44444");
 	b1.shape.append(L"44444");
@@ -280,8 +297,8 @@ void game_initialise_bunkers()
 	bunkers.push_back(b1);
 
 	bunker b2;
-	b2.pos_y = n_bunker_y;
-	b2.pos_x = n_bunker_2_x;
+	b2.y = f_bunker_y;
+	b2.x = n_bunker_2_x;
 	b2.shape.append(L".444.");
 	b2.shape.append(L"44444");
 	b2.shape.append(L"44444");
@@ -289,8 +306,8 @@ void game_initialise_bunkers()
 	bunkers.push_back(b2);
 
 	bunker b3;
-	b3.pos_y = n_bunker_y;
-	b3.pos_x = n_bunker_3_x;
+	b3.y = f_bunker_y;
+	b3.x = n_bunker_3_x;
 	b3.shape.append(L".444.");
 	b3.shape.append(L"44444");
 	b3.shape.append(L"44444");
@@ -298,8 +315,8 @@ void game_initialise_bunkers()
 	bunkers.push_back(b3);
 
 	bunker b4;
-	b4.pos_y = n_bunker_y;
-	b4.pos_x = n_bunker_4_x;
+	b4.y = f_bunker_y;
+	b4.x = n_bunker_4_x;
 	b4.shape.append(L".444.");
 	b4.shape.append(L"44444");
 	b4.shape.append(L"44444");
@@ -311,7 +328,7 @@ bool game_player_bullet_hit_enemy()
 {
 	for (auto& enemy : enemies)
 	{
-		if (enemy.pos_x == n_bullet_x && enemy.pos_y == n_bullet_y)
+		if (pos_cmp(enemy.x, f_bullet_x) && pos_cmp(enemy.y, f_bullet_y))
 		{
 			n_score += enemy.points;
 			enemy.chr = n_chr_alien_explosion;
@@ -331,7 +348,7 @@ bool game_player_bullet_hit_bunker()
 			{
 				if (bunker.shape[y * n_bunker_width + x] != L'.')
 				{
-					if (((bunker.pos_x + x) == n_bullet_x) && ((bunker.pos_y + y) == n_bullet_y))
+					if (pos_cmp(bunker.x + x, f_bullet_x) && pos_cmp(bunker.y + y, f_bullet_y))
 					{
 						auto b_hit = false;
 						switch (bunker.shape[y * n_bunker_width + x])
@@ -366,9 +383,9 @@ bool game_player_bullet_hit_bunker()
 
 bool game_enemy_bullet_hit_player()
 {
-	for (auto bullet : enemy_bullets)
+	for (const auto bullet : enemy_bullets)
 	{
-		if ((bullet.pos_x == n_player_pos) && (bullet.pos_y == n_player_row))
+		if (pos_cmp(bullet.x, f_player_pos) && pos_cmp(bullet.y, f_player_row))
 		{
 			n_current_player_chr = n_chr_player_explosion;
 			return true;
@@ -389,7 +406,7 @@ bool game_enemy_bullet_hit_bunker()
 				{
 					for (auto& bullet : enemy_bullets)
 					{
-						if (((bunker.pos_x + x) == bullet.pos_x) && ((bunker.pos_y + y) == bullet.pos_y))
+						if (pos_cmp(bunker.x + x, bullet.x) && pos_cmp(bunker.y + y, bullet.y))
 						{
 							auto b_hit = false;
 							switch (bunker.shape[y * n_bunker_width + x])
@@ -425,9 +442,9 @@ bool game_enemy_bullet_hit_bunker()
 
 bool game_enemy_hit_bunker()
 {
-	for (auto& enemy : enemies)
+	for (auto& bunker : bunkers)
 	{
-		for (auto& bunker : bunkers)
+		for (auto& enemy : enemies)
 		{
 			for (auto x = 0; x < n_bunker_width; x++)
 			{
@@ -435,7 +452,7 @@ bool game_enemy_hit_bunker()
 				{
 					if (bunker.shape[y * n_bunker_width + x] != L'.')
 					{
-						if (((bunker.pos_x + x) == enemy.pos_x) && ((bunker.pos_y + y) == enemy.pos_y))
+						if (pos_cmp(bunker.x + x, enemy.x) && pos_cmp(bunker.y + y, enemy.y))
 						{
 							auto b_hit = false;
 							switch (bunker.shape[y * n_bunker_width + x])
@@ -471,36 +488,29 @@ bool game_enemy_hit_bunker()
 
 void game_process_player(const float elapsed)
 {
-	n_player_speed_count++;
-	if (n_player_speed_count <= n_player_speed_delta) return;
-	n_player_speed_count = 0;
-
 	if (n_current_player_chr == n_chr_player_explosion)
 	{
 		n_current_player_chr = n_chr_player;
 	}
 
-	if (b_key_left && n_player_pos > 0) n_player_pos--;
-	if (b_key_right && n_player_pos < n_screen_width - 1) n_player_pos++;
+	if (b_key_left) f_player_pos -= f_player_speed * elapsed;
+	if (b_key_right) f_player_pos += f_player_speed * elapsed;
+	buffer_clip(f_player_pos, f_player_row);
 }
 
 void game_process_bullet(const float elapsed)
 {
-	n_bullet_speed_count++;
-	if (n_bullet_speed_count <= n_bullet_speed_delta) return;
-	n_bullet_speed_count = 0;
-
 	if (!b_player_shooting && b_key_shoot)
 	{
 		b_player_shooting = true;
-		n_bullet_x = n_player_pos;
-		n_bullet_y = n_player_row;
+		f_bullet_x = f_player_pos;
+		f_bullet_y = f_player_row;
 	}
 
 	if (b_player_shooting)
 	{
-		n_bullet_y--;
-		if (n_bullet_y == 1)
+		f_bullet_y -= f_bullet_speed * elapsed;
+		if (f_bullet_y <= 1)
 		{
 			b_player_shooting = false;
 		}
@@ -508,9 +518,9 @@ void game_process_bullet(const float elapsed)
 		if (game_player_bullet_hit_enemy())
 		{
 			n_enemies_killed++;
-			if (n_enemies_killed % n_enemy_speed_mod == 0)
+			if (n_enemies_killed % n_enemy_speed_increase_threshold == 0)
 			{
-				n_enemy_speed_delta -= n_enemy_speed_adjustment;
+				f_enemy_speed += n_enemy_speed_adjustment;
 			}
 			b_player_shooting = false;
 		}
@@ -536,13 +546,13 @@ void game_enemy_shoot(float elapsed)
 	{
 		n_enemy_shot_wait = 0;
 		b_enemy_shooting = true;
-		auto enemy_y = n_player_row;
+		auto enemy_y = f_player_row;
 		enemy shooting_enemy;
 		for (const auto enemy : enemies)
 		{
-			if ((enemy.pos_x > n_player_pos - 5) && (enemy.pos_x < n_player_pos + 5))
+			if ((enemy.x > f_player_pos - 5) && (enemy.x < f_player_pos + 5))
 			{
-				const auto y_test = n_player_row - enemy.pos_y;
+				const auto y_test = f_player_row - enemy.y;
 				if (y_test < enemy_y)
 				{
 					enemy_y = y_test;
@@ -550,11 +560,11 @@ void game_enemy_shoot(float elapsed)
 				}
 			}
 		}
-		if ((shooting_enemy.pos_x > 0) && (shooting_enemy.pos_y > 0))
+		if ((shooting_enemy.x > 0) && (shooting_enemy.y > 0))
 		{
 			enemy_bullet b;
-			b.pos_x = shooting_enemy.pos_x;
-			b.pos_y = shooting_enemy.pos_y + 1;
+			b.x = shooting_enemy.x;
+			b.y = shooting_enemy.y + 1.0f;
 			b.chr = n_chr_alien_bullet_a;
 			enemy_bullets.push_back(b);
 		}
@@ -567,11 +577,11 @@ void game_process_enemy_bullet(const float elapsed)
 	if (n_enemy_bullet_speed_count <= n_enemy_bullet_speed_delta) return;
 	n_enemy_bullet_speed_count = 0;
 
-	game_enemy_shoot();
+	//game_enemy_shoot();
 
 	for (auto& bullet : enemy_bullets)
 	{
-		bullet.pos_y++;
+		bullet.y++;
 		if (bullet.chr == n_chr_alien_bullet_a)
 		{
 			bullet.chr = n_chr_alien_bullet_b;
@@ -596,7 +606,7 @@ void game_process_enemy_bullet(const float elapsed)
 			bullet.remove = true;
 		}
 
-		if (bullet.pos_y == n_player_row)
+		if (pos_cmp(bullet.y, f_player_row))
 		{
 			bullet.remove = true;
 		}
@@ -609,8 +619,6 @@ void game_enemy_update_sprites(float elapsed)
 {
 	for (auto& enemy : enemies)
 	{
-		enemy.pos_x += enemy_dir;
-
 		if (enemy.chr == n_chr_alien_3_a)
 		{
 			enemy.chr = n_chr_alien_3_b;
@@ -656,18 +664,23 @@ void game_enemy_remove_dead()
 
 void game_process_enemies(const float elapsed)
 {
-	n_enemy_speed_count++;
-	if (n_enemy_speed_count <= n_enemy_speed_delta) return;
-	n_enemy_speed_count = 0;
-
 	auto b_hit_wall = false;
+	auto b_action_pulse = false;
 	for (auto& enemy : enemies)
 	{
-		const auto new_x_pos = enemy.pos_x + enemy_dir;
-		b_hit_wall = (new_x_pos == n_screen_width) || (new_x_pos < 0);
-		if (b_hit_wall)
+		const auto old_x = static_cast<int>(enemy.x);
+		enemy.x += f_enemy_speed * elapsed;
+		b_action_pulse = old_x != static_cast<int>(enemy.x);
+
+		if (enemy.x >= static_cast<float>(n_screen_width))
 		{
-			break;
+			b_hit_wall = true;
+			enemy.x = static_cast<float>(n_screen_width);
+		}
+		else if (enemy.x <= 0.0f)
+		{
+			b_hit_wall = true;
+			enemy.x = 0.0f;
 		}
 	}
 
@@ -675,14 +688,14 @@ void game_process_enemies(const float elapsed)
 	{
 		for (auto& enemy : enemies)
 		{
-			enemy.pos_y++;
+			enemy.y++;
 			if (!b_lost)
 			{
-				b_lost = (enemy.pos_y == n_player_row);
+				b_lost = (enemy.y >= f_player_row);
 			}
 		}
-		enemy_dir *= -1;
-		return;
+
+		f_enemy_speed *= -1;
 	}
 
 	if (game_enemy_hit_bunker())
@@ -690,37 +703,40 @@ void game_process_enemies(const float elapsed)
 		b_lost = true;
 	}
 
-	game_enemy_update_sprites();
-	game_enemy_remove_dead();
-	game_enemy_shoot();
+	if (b_action_pulse)
+	{
+		game_enemy_update_sprites(elapsed);
+		game_enemy_remove_dead();
+		game_enemy_shoot(elapsed);
+	}
 }
 
 void game_draw_player()
 {
-	buffer_plot_char(n_player_pos, n_player_row, n_current_player_chr);
+	buffer_plot_char(f_player_pos, f_player_row, n_current_player_chr);
 }
 
 void game_draw_bullet()
 {
 	if (b_player_shooting)
 	{
-		buffer_plot_char(n_bullet_x, n_bullet_y, n_chr_player_bullet);
+		buffer_plot_char(f_bullet_x, f_bullet_y, n_chr_player_bullet);
 	}
 }
 
 void game_draw_enemies()
 {
-	for (auto enemy : enemies)
+	for (const auto enemy : enemies)
 	{
-		buffer_plot_char(enemy.pos_x, enemy.pos_y, enemy.chr);
+		buffer_plot_char(enemy.x, enemy.y, enemy.chr);
 	}
 }
 
 void game_draw_enemy_bullets()
 {
-	for (auto bullet : enemy_bullets)
+	for (const auto bullet : enemy_bullets)
 	{
-		buffer_plot_char(bullet.pos_x, bullet.pos_y, bullet.chr);
+		buffer_plot_char(bullet.x, bullet.y, bullet.chr);
 	}
 }
 
@@ -753,7 +769,7 @@ void game_draw_bunkers()
 						n_bunker_chr = n_000_pc;
 						break;
 					}
-					buffer_plot_char(bunkers[b].pos_x + x, bunkers[b].pos_y + y, n_bunker_chr);
+					buffer_plot_char(bunkers[b].x + x, bunkers[b].y + y, n_bunker_chr);
 				}
 			}
 		}
@@ -764,7 +780,7 @@ void game_draw_ground()
 {
 	for (auto i = 0; i < n_screen_width; i++)
 	{
-		buffer_plot_char(i, n_screen_height - 3, L'_');
+		buffer_plot_char(static_cast<float>(i), static_cast<float>(n_screen_height) - 3, L'_');
 	}
 }
 
@@ -783,7 +799,7 @@ const wchar_t* game_get_lives_message()
 
 void game_draw_hud(const int fps)
 {
-	buffer_draw_text_hc(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
+	buffer_draw_text_hc(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
 	buffer_draw_text(1, 0, std::wcslen(msg_score) + 1, msg_score);
 	buffer_draw_text(3, 1, 5, msg_score_fmt, n_score);
 
@@ -792,25 +808,25 @@ void game_draw_hud(const int fps)
 
 	if (b_draw_stats)
 	{
-		buffer_draw_text(n_screen_width - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
-		buffer_draw_text(n_screen_width - 6, 1, 6, msg_key_state, b_key_left, b_key_right, b_key_shoot);
-		buffer_draw_text(n_screen_width - 10, 2, 10, msg_fps, fps);
-		buffer_draw_text(n_screen_width - 10, 3, 10, msg_killed, n_enemies_killed);
-		buffer_draw_text(n_screen_width - 12, 4, 12, msg_speed, n_enemy_speed_delta);
+		buffer_draw_text(static_cast<float>(n_screen_width) - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
+		buffer_draw_text(static_cast<float>(n_screen_width) - 6, 1, 6, msg_key_state, b_key_left, b_key_right, b_key_shoot);
+		buffer_draw_text(static_cast<float>(n_screen_width) - 10, 2, 10, msg_fps, fps);
+		buffer_draw_text(static_cast<float>(n_screen_width) - 10, 3, 10, msg_killed, n_enemies_killed);
+		buffer_draw_text(static_cast<float>(n_screen_width) - 12, 4, 12, msg_speed, f_enemy_speed);
 	}
 
 	const auto* lives_msg = game_get_lives_message();
-	buffer_draw_text(1, n_screen_height - 2, std::wcslen(lives_msg) + 1, lives_msg);
+	buffer_draw_text(1, static_cast<float>(n_screen_height) - 2, std::wcslen(lives_msg) + 1, lives_msg);
 }
 
 // === MODES ===
 
 void mode_intro_screen(const float elapsed)
 {
-	buffer_draw_text_hc((n_screen_height / 2) - 4, std::wcslen(msg_title) + 1, msg_title);
-	buffer_draw_text_hc((n_screen_height / 2) - 2, std::wcslen(msg_why) + 1, msg_why);
-	buffer_draw_text_hc((n_screen_height / 2) + 4, std::wcslen(msg_start) + 1, msg_start);
-	buffer_draw_text_hc(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_title) + 1, msg_title);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_why) + 1, msg_why);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) + 4, std::wcslen(msg_start) + 1, msg_start);
+	buffer_draw_text_hc(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
 	if (b_key_start)
 	{
 		n_mode = e_mode::mode_game;
@@ -841,18 +857,18 @@ void mode_game_play(const float elapsed, const int fps)
 
 void mode_win_screen(const float elapsed)
 {
-	buffer_draw_text_hc((n_screen_height / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
-	buffer_draw_text_hc((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
-	buffer_draw_text_hc((n_screen_height / 2) - 1, 5, msg_score_fmt, n_score);
-	buffer_draw_text_hc(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 1, 5, msg_score_fmt, n_score);
+	buffer_draw_text_hc(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
 }
 
 void mode_loss_screen(const float elapsed)
 {
-	buffer_draw_text_hc((n_screen_height / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
-	buffer_draw_text_hc((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
-	buffer_draw_text_hc((n_screen_height / 2) - 1, 5, msg_score_fmt, n_score);
-	buffer_draw_text_hc(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
+	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 1, 5, msg_score_fmt, n_score);
+	buffer_draw_text_hc(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
 }
 
 int main()
