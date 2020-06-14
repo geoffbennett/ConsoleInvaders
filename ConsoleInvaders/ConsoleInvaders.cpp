@@ -5,6 +5,8 @@
 
 using namespace std;
 
+#include "game_timer.h"
+
 #include <Windows.h>
 
 enum class e_mode
@@ -49,7 +51,6 @@ auto n_screen_width = 80;
 auto n_screen_height = 30;
 auto b_draw_stats = false;
 auto b_draw_stats_latch = false;
-auto n_fps = 0;
 auto n_lives = 3;
 auto n_score = 0;
 auto n_high_score = 0;
@@ -467,7 +468,7 @@ bool game_enemy_hit_bunker()
 	return false;
 }
 
-void game_process_player()
+void game_process_player(const float elapsed)
 {
 	n_player_speed_count++;
 	if (n_player_speed_count <= n_player_speed_delta) return;
@@ -482,7 +483,7 @@ void game_process_player()
 	if (b_key_right && n_player_pos < n_screen_width - 1) n_player_pos++;
 }
 
-void game_process_bullet()
+void game_process_bullet(const float elapsed)
 {
 	n_bullet_speed_count++;
 	if (n_bullet_speed_count <= n_bullet_speed_delta) return;
@@ -526,7 +527,7 @@ void game_enemy_bullet_remove_dead()
 	b_enemy_shooting = false;
 }
 
-void game_enemy_shoot()
+void game_enemy_shoot(float elapsed)
 {
 	n_enemy_shot_wait++;
 	const auto rand_val = rand() % 14;
@@ -559,7 +560,7 @@ void game_enemy_shoot()
 	}
 }
 
-void game_process_enemy_bullet()
+void game_process_enemy_bullet(const float elapsed)
 {
 	n_enemy_bullet_speed_count++;
 	if (n_enemy_bullet_speed_count <= n_enemy_bullet_speed_delta) return;
@@ -603,7 +604,7 @@ void game_process_enemy_bullet()
 	game_enemy_bullet_remove_dead();
 }
 
-void game_enemy_update_sprites()
+void game_enemy_update_sprites(float elapsed)
 {
 	for (auto& enemy : enemies)
 	{
@@ -652,7 +653,7 @@ void game_enemy_remove_dead()
 	}
 }
 
-void game_process_enemies()
+void game_process_enemies(const float elapsed)
 {
 	n_enemy_speed_count++;
 	if (n_enemy_speed_count <= n_enemy_speed_delta) return;
@@ -766,20 +767,6 @@ void game_draw_ground()
 	}
 }
 
-void game_calc_fps()
-{
-	static auto old_time = std::chrono::high_resolution_clock::now();
-	static int fps;
-
-	fps++;
-
-	if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - old_time) >= std::chrono::seconds{ 1 }) {
-		old_time = std::chrono::high_resolution_clock::now();
-		n_fps = fps;
-		fps = 0;
-	}
-}
-
 const wchar_t* game_get_lives_message()
 {
 	switch (n_lives)
@@ -793,7 +780,7 @@ const wchar_t* game_get_lives_message()
 	}
 }
 
-void game_draw_hud()
+void game_draw_hud(const int fps)
 {
 	buffer_draw_text_hc(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
 	buffer_draw_text(1, 0, std::wcslen(msg_score) + 1, msg_score);
@@ -806,7 +793,7 @@ void game_draw_hud()
 	{
 		buffer_draw_text(n_screen_width - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
 		buffer_draw_text(n_screen_width - 6, 1, 6, msg_key_state, b_key_left, b_key_right, b_key_shoot);
-		buffer_draw_text(n_screen_width - 10, 2, 10, msg_fps, n_fps);
+		buffer_draw_text(n_screen_width - 10, 2, 10, msg_fps, fps);
 		buffer_draw_text(n_screen_width - 10, 3, 10, msg_killed, n_enemies_killed);
 		buffer_draw_text(n_screen_width - 12, 4, 12, msg_speed, n_enemy_speed_delta);
 	}
@@ -817,7 +804,7 @@ void game_draw_hud()
 
 // === MODES ===
 
-void mode_intro_screen()
+void mode_intro_screen(const float elapsed)
 {
 	buffer_draw_text_hc((n_screen_height / 2) - 4, std::wcslen(msg_title) + 1, msg_title);
 	buffer_draw_text_hc((n_screen_height / 2) - 2, std::wcslen(msg_why) + 1, msg_why);
@@ -829,12 +816,12 @@ void mode_intro_screen()
 	}
 }
 
-void mode_game_play()
+void mode_game_play(const float elapsed, const int fps)
 {
-	game_process_player();
-	game_process_bullet();
-	game_process_enemies();
-	game_process_enemy_bullet();
+	game_process_player(elapsed);
+	game_process_bullet(elapsed);
+	game_process_enemies(elapsed);
+	game_process_enemy_bullet(elapsed);
 
 	game_draw_player();
 	game_draw_bullet();
@@ -843,7 +830,7 @@ void mode_game_play()
 	game_draw_bunkers();
 	game_draw_ground();
 
-	game_draw_hud();
+	game_draw_hud(fps);
 
 	if (b_lost)
 	{
@@ -851,7 +838,7 @@ void mode_game_play()
 	}
 }
 
-void mode_win_screen()
+void mode_win_screen(const float elapsed)
 {
 	buffer_draw_text_hc((n_screen_height / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
 	buffer_draw_text_hc((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
@@ -859,7 +846,7 @@ void mode_win_screen()
 	buffer_draw_text_hc(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
 }
 
-void mode_loss_screen()
+void mode_loss_screen(const float elapsed)
 {
 	buffer_draw_text_hc((n_screen_height / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
 	buffer_draw_text_hc((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
@@ -871,6 +858,8 @@ int main()
 {
 	try
 	{
+		auto* const timer = new game_timer();
+
 		screen_initialise();
 		buffer_initialise();
 
@@ -880,6 +869,7 @@ int main()
 		auto b_quit_game = false;
 		while (!b_quit_game)
 		{
+			const auto f_elapsed = timer->get_elapsed();
 			buffer_clear();
 
 			input_sample();
@@ -888,28 +878,29 @@ int main()
 			switch (n_mode)
 			{
 			case e_mode::mode_intro:
-				mode_intro_screen();
+				mode_intro_screen(f_elapsed);
 				break;
 			case e_mode::mode_game:
-				mode_game_play();
+				mode_game_play(f_elapsed, timer->get_fps());
 				break;
 			case e_mode::mode_win:
-				mode_win_screen();
+				mode_win_screen(f_elapsed);
 				break;
 			default:
-				mode_loss_screen();
+				mode_loss_screen(f_elapsed);
 				break;
 			}
 
 			buffer_present();
 			screen_refresh();
 
-			game_calc_fps();
-			//this_thread::sleep_for(50ms);
+			timer->frame();
+
 			b_quit_game = b_key_quit;
 		}
 
 		screen_cleanup();
+		delete timer;
 		return EXIT_SUCCESS;
 	}
 	catch (...)
