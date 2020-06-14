@@ -152,6 +152,7 @@ void screen_initialise()
 	for (auto i = 0; i < n_screen_width * n_screen_height; i++) screen[i] = L' ';
 	h_screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, nullptr, CONSOLE_TEXTMODE_BUFFER, nullptr);
 	SetConsoleActiveScreenBuffer(h_screen);
+	SetConsoleTitle(msg_title);
 }
 
 void screen_cleanup()
