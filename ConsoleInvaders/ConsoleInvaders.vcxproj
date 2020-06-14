@@ -139,6 +139,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConsoleInvaders.cpp" />
+    <ClCompile Include="game_timer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="game_timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
