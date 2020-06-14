@@ -137,9 +137,9 @@ const wchar_t* msg_score_fmt = L"%04d";
 const wchar_t* msg_key_title = L"L R S";
 const wchar_t* msg_key_state = L"%1d %1d %1d";
 const wchar_t* msg_fps = L"FPS: %4d";
-const wchar_t* msg_lives_3 = L"3 A A A";
-const wchar_t* msg_lives_2 = L"2 A A";
-const wchar_t* msg_lives_1 = L"1 A";
+const wchar_t* msg_lives_3 = L"3 \u2569 \u2569 \u2569";
+const wchar_t* msg_lives_2 = L"2 \u2569 \u2569";
+const wchar_t* msg_lives_1 = L"1 \u2569";
 const wchar_t* msg_killed = L"Kills: %02d";
 const wchar_t* msg_speed = L"Speed: %04d";
 
