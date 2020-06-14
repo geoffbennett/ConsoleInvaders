@@ -6,6 +6,7 @@
 using namespace std;
 
 #include "game_timer.h"
+#include "keyboard.h"
 
 #include <Windows.h>
 
@@ -57,14 +58,6 @@ auto n_high_score = 0;
 auto b_lost = false;
 auto b_won = false;
 auto n_mode = e_mode::mode_intro;
-
-// Input state
-auto b_key_stats = false;
-auto b_key_left = false;
-auto b_key_right = false;
-auto b_key_shoot = false;
-auto b_key_quit = false;
-auto b_key_start = false;
 
 // Player
 auto f_player_speed = 30.0f;
@@ -220,19 +213,9 @@ void buffer_draw_text_hc(float y, const size_t size, const wchar_t* fmt, ...)
 
 // === INPUT ===
 
-void input_sample()
+void input_handle_stats_toggle(keyboard* input)
 {
-	b_key_stats = (0x8000 & GetAsyncKeyState(VK_F1)) != 0;
-	b_key_left = (0x8000 & GetAsyncKeyState(VK_LEFT)) != 0;
-	b_key_right = (0x8000 & GetAsyncKeyState(VK_RIGHT)) != 0;
-	b_key_shoot = (0x8000 & GetAsyncKeyState(VK_SPACE)) != 0;
-	b_key_quit = (0x8000 & GetAsyncKeyState(VK_ESCAPE)) != 0;
-	b_key_start = (0x8000 & GetAsyncKeyState(VK_RETURN)) != 0;
-}
-
-void input_handle_stats_toggle()
-{
-	if (b_key_stats)
+	if (input->get_key(VK_F1).pressed)
 	{
 		if (!b_draw_stats_latch && !b_draw_stats)
 		{
@@ -486,21 +469,21 @@ bool game_enemy_hit_bunker()
 	return false;
 }
 
-void game_process_player(const float elapsed)
+void game_process_player(const float elapsed, keyboard* input)
 {
 	if (n_current_player_chr == n_chr_player_explosion)
 	{
 		n_current_player_chr = n_chr_player;
 	}
 
-	if (b_key_left) f_player_pos -= f_player_speed * elapsed;
-	if (b_key_right) f_player_pos += f_player_speed * elapsed;
+	if (input->get_key(VK_LEFT).held) f_player_pos -= f_player_speed * elapsed;
+	if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
 	buffer_clip(f_player_pos, f_player_row);
 }
 
-void game_process_bullet(const float elapsed)
+void game_process_bullet(const float elapsed, keyboard* input)
 {
-	if (!b_player_shooting && b_key_shoot)
+	if (!b_player_shooting && input->get_key(VK_SPACE).held)
 	{
 		b_player_shooting = true;
 		f_bullet_x = f_player_pos;
@@ -797,7 +780,7 @@ const wchar_t* game_get_lives_message()
 	}
 }
 
-void game_draw_hud(const int fps)
+void game_draw_hud(const int fps, keyboard* input)
 {
 	buffer_draw_text_hc(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
 	buffer_draw_text(1, 0, std::wcslen(msg_score) + 1, msg_score);
@@ -809,7 +792,7 @@ void game_draw_hud(const int fps)
 	if (b_draw_stats)
 	{
 		buffer_draw_text(static_cast<float>(n_screen_width) - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
-		buffer_draw_text(static_cast<float>(n_screen_width) - 6, 1, 6, msg_key_state, b_key_left, b_key_right, b_key_shoot);
+		buffer_draw_text(static_cast<float>(n_screen_width) - 6, 1, 6, msg_key_state, input->get_key(VK_LEFT).held, input->get_key(VK_RIGHT).held, input->get_key(VK_SPACE).held);
 		buffer_draw_text(static_cast<float>(n_screen_width) - 10, 2, 10, msg_fps, fps);
 		buffer_draw_text(static_cast<float>(n_screen_width) - 10, 3, 10, msg_killed, n_enemies_killed);
 		buffer_draw_text(static_cast<float>(n_screen_width) - 12, 4, 12, msg_speed, f_enemy_speed);
@@ -821,22 +804,22 @@ void game_draw_hud(const int fps)
 
 // === MODES ===
 
-void mode_intro_screen(const float elapsed)
+void mode_intro_screen(const float elapsed, keyboard *input)
 {
 	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_title) + 1, msg_title);
 	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_why) + 1, msg_why);
 	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) + 4, std::wcslen(msg_start) + 1, msg_start);
 	buffer_draw_text_hc(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
-	if (b_key_start)
+	if (input->get_key(VK_RETURN).pressed)
 	{
 		n_mode = e_mode::mode_game;
 	}
 }
 
-void mode_game_play(const float elapsed, const int fps)
+void mode_game_play(const float elapsed, keyboard* input, const int fps)
 {
-	game_process_player(elapsed);
-	game_process_bullet(elapsed);
+	game_process_player(elapsed, input);
+	game_process_bullet(elapsed, input);
 	game_process_enemies(elapsed);
 	game_process_enemy_bullet(elapsed);
 
@@ -847,7 +830,7 @@ void mode_game_play(const float elapsed, const int fps)
 	game_draw_enemy_bullets();
 	game_draw_ground();
 
-	game_draw_hud(fps);
+	game_draw_hud(fps, input);
 
 	if (b_lost)
 	{
@@ -855,7 +838,7 @@ void mode_game_play(const float elapsed, const int fps)
 	}
 }
 
-void mode_win_screen(const float elapsed)
+void mode_win_screen(const float elapsed, keyboard* input)
 {
 	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
 	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
@@ -863,7 +846,7 @@ void mode_win_screen(const float elapsed)
 	buffer_draw_text_hc(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
 }
 
-void mode_loss_screen(const float elapsed)
+void mode_loss_screen(const float elapsed, keyboard* input)
 {
 	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
 	buffer_draw_text_hc((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
@@ -876,6 +859,7 @@ int main()
 	try
 	{
 		auto* const timer = new game_timer();
+		auto* const input = new keyboard();
 
 		screen_initialise();
 		buffer_initialise();
@@ -887,24 +871,24 @@ int main()
 		while (!b_quit_game)
 		{
 			const auto f_elapsed = timer->get_elapsed();
+			input->sample();
 			buffer_clear();
 
-			input_sample();
-			input_handle_stats_toggle();
+			input_handle_stats_toggle(input);
 
 			switch (n_mode)
 			{
 			case e_mode::mode_intro:
-				mode_intro_screen(f_elapsed);
+				mode_intro_screen(f_elapsed, input);
 				break;
 			case e_mode::mode_game:
-				mode_game_play(f_elapsed, timer->get_fps());
+				mode_game_play(f_elapsed, input, timer->get_fps());
 				break;
 			case e_mode::mode_win:
-				mode_win_screen(f_elapsed);
+				mode_win_screen(f_elapsed, input);
 				break;
 			default:
-				mode_loss_screen(f_elapsed);
+				mode_loss_screen(f_elapsed, input);
 				break;
 			}
 
@@ -913,11 +897,14 @@ int main()
 
 			timer->frame();
 
-			b_quit_game = b_key_quit;
+			b_quit_game = input->get_key(VK_ESCAPE).pressed;
 		}
 
 		screen_cleanup();
+		// ERROR: Why does this cause a heap corruption?
+		// delete input;
 		delete timer;
+		
 		return EXIT_SUCCESS;
 	}
 	catch (...)
