@@ -2,14 +2,15 @@
 #include <chrono>
 #include <thread>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
+
+#include <Windows.h>
 
 #include "console_screen.h"
 #include "game_timer.h"
 #include "keyboard.h"
-
-#include <Windows.h>
 
 enum class e_mode
 {
@@ -42,8 +43,6 @@ struct bunker
 	float y = 0.0f;
 	wstring shape;
 };
-
-// Screen variables
 
 // Global game state
 auto n_screen_width = 80;
