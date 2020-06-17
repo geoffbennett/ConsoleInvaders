@@ -45,6 +45,16 @@ console_screen::~console_screen()
 	CloseHandle(h_screen_);
 }
 
+int console_screen::get_width() const
+{
+	return n_width_;
+}
+
+int console_screen::get_height() const
+{
+	return n_height_;
+}
+
 void console_screen::clear() const
 {
 	for (auto i = 0; i < n_width_ * n_height_; i++) p_buffer_[i] = L' ';

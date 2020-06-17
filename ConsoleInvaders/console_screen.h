@@ -21,6 +21,9 @@ public:
 	console_screen(int width, int height, const wchar_t* title);
 	~console_screen();
 
+	int get_width() const;
+	int get_height() const;
+	
 	void clear() const;
 	void flip() const;
 	void present() const;
