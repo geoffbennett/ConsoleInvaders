@@ -4,6 +4,9 @@
 #include <vector>
 #include <algorithm>
 
+#include "game_object.h"
+#include "player.h"
+
 using namespace std;
 
 #include <Windows.h>
@@ -56,10 +59,12 @@ auto b_lost = false;
 auto b_won = false;
 auto n_mode = e_mode::mode_intro;
 
+vector<game_object*> objects;
+
 // Player
-auto f_player_speed = 30.0f;
-auto f_player_row = static_cast<float>(n_screen_height - 4.0f);
-auto f_player_pos = static_cast<float>(n_screen_width / 2.0f);
+//auto f_player_speed = 30.0f;
+//auto f_player_row = static_cast<float>(n_screen_height - 4.0f);
+//auto f_player_pos = static_cast<float>(n_screen_width / 2.0f);
 auto b_player_shooting = false;
 
 auto f_bullet_x = 0.0f;
@@ -263,14 +268,14 @@ bool game_player_bullet_hit_bunker()
 
 bool game_enemy_bullet_hit_player()
 {
-	for (const auto bullet : enemy_bullets)
-	{
-		if (pos_cmp(bullet.x, f_player_pos) && pos_cmp(bullet.y, f_player_row))
-		{
-			n_current_player_chr = n_chr_player_explosion;
-			return true;
-		}
-	}
+	//for (const auto bullet : enemy_bullets)
+	//{
+	//	if (pos_cmp(bullet.x, f_player_pos) && pos_cmp(bullet.y, f_player_row))
+	//	{
+	//		n_current_player_chr = n_chr_player_explosion;
+	//		return true;
+	//	}
+	//}
 	return false;
 }
 
@@ -373,18 +378,18 @@ void game_process_player(const float elapsed, keyboard* input)
 		n_current_player_chr = n_chr_player;
 	}
 
-	if (input->get_key(VK_LEFT).held) f_player_pos -= f_player_speed * elapsed;
-	if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
+	//if (input->get_key(VK_LEFT).held) f_player_pos -= f_player_speed * elapsed;
+	//if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
 }
 
 void game_process_bullet(const float elapsed, keyboard* input)
 {
-	if (!b_player_shooting && input->get_key(VK_SPACE).held)
-	{
-		b_player_shooting = true;
-		f_bullet_x = f_player_pos;
-		f_bullet_y = f_player_row;
-	}
+	//if (!b_player_shooting && input->get_key(VK_SPACE).held)
+	//{
+	//	b_player_shooting = true;
+	//	f_bullet_x = f_player_pos;
+	//	f_bullet_y = f_player_row;
+	//}
 
 	if (b_player_shooting)
 	{
@@ -421,33 +426,33 @@ void game_enemy_shoot(float elapsed)
 {
 	n_enemy_shot_wait++;
 	const auto rand_val = rand() % 14;
-	if ((rand_val == 11) && !b_enemy_shooting && (n_enemy_shot_wait > n_enemy_shot_reset))
-	{
-		n_enemy_shot_wait = 0;
-		b_enemy_shooting = true;
-		auto enemy_y = f_player_row;
-		enemy shooting_enemy;
-		for (const auto enemy : enemies)
-		{
-			if ((enemy.x > f_player_pos - 5) && (enemy.x < f_player_pos + 5))
-			{
-				const auto y_test = f_player_row - enemy.y;
-				if (y_test < enemy_y)
-				{
-					enemy_y = y_test;
-					shooting_enemy = enemy;
-				}
-			}
-		}
-		if ((shooting_enemy.x > 0) && (shooting_enemy.y > 0))
-		{
-			enemy_bullet b;
-			b.x = shooting_enemy.x;
-			b.y = shooting_enemy.y + 1.0f;
-			b.chr = n_chr_alien_bullet_a;
-			enemy_bullets.push_back(b);
-		}
-	}
+	//if ((rand_val == 11) && !b_enemy_shooting && (n_enemy_shot_wait > n_enemy_shot_reset))
+	//{
+	//	n_enemy_shot_wait = 0;
+	//	b_enemy_shooting = true;
+	//	auto enemy_y = f_player_row;
+	//	enemy shooting_enemy;
+	//	for (const auto enemy : enemies)
+	//	{
+	//		if ((enemy.x > f_player_pos - 5) && (enemy.x < f_player_pos + 5))
+	//		{
+	//			const auto y_test = f_player_row - enemy.y;
+	//			if (y_test < enemy_y)
+	//			{
+	//				enemy_y = y_test;
+	//				shooting_enemy = enemy;
+	//			}
+	//		}
+	//	}
+	//	if ((shooting_enemy.x > 0) && (shooting_enemy.y > 0))
+	//	{
+	//		enemy_bullet b;
+	//		b.x = shooting_enemy.x;
+	//		b.y = shooting_enemy.y + 1.0f;
+	//		b.chr = n_chr_alien_bullet_a;
+	//		enemy_bullets.push_back(b);
+	//	}
+	//}
 }
 
 void game_process_enemy_bullet(const float elapsed)
@@ -485,10 +490,10 @@ void game_process_enemy_bullet(const float elapsed)
 			bullet.remove = true;
 		}
 
-		if (pos_cmp(bullet.y, f_player_row))
-		{
-			bullet.remove = true;
-		}
+		//if (pos_cmp(bullet.y, f_player_row))
+		//{
+		//	bullet.remove = true;
+		//}
 	}
 
 	game_enemy_bullet_remove_dead();
@@ -568,10 +573,10 @@ void game_process_enemies(const float elapsed)
 		for (auto& enemy : enemies)
 		{
 			enemy.y++;
-			if (!b_lost)
-			{
-				b_lost = (enemy.y >= f_player_row);
-			}
+			//if (!b_lost)
+			//{
+			//	b_lost = (enemy.y >= f_player_row);
+			//}
 		}
 
 		f_enemy_speed *= -1;
@@ -592,7 +597,7 @@ void game_process_enemies(const float elapsed)
 
 void game_draw_player(console_screen* screen)
 {
-	screen->plot_char(f_player_pos, f_player_row, n_current_player_chr);
+	//screen->plot_char(f_player_pos, f_player_row, n_current_player_chr);
 }
 
 void game_draw_bullet(console_screen* screen)
@@ -723,17 +728,23 @@ void mode_intro_screen(const float elapsed, keyboard* input, console_screen* scr
 
 void mode_game_play(const float elapsed, keyboard* input, console_screen* screen, const int fps)
 {
-	game_process_player(elapsed, input);
+	//game_process_player(elapsed, input);
 	game_process_bullet(elapsed, input);
 	game_process_enemies(elapsed);
 	game_process_enemy_bullet(elapsed);
 
 	game_draw_bunkers(screen);
-	game_draw_player(screen);
+	//game_draw_player(screen);
 	game_draw_bullet(screen);
 	game_draw_enemies(screen);
 	game_draw_enemy_bullets(screen);
 	game_draw_ground(screen);
+
+	for (auto& o : objects)
+	{
+		o->update();
+		o->draw();
+	}
 
 	game_draw_hud(fps, input, screen);
 
@@ -777,6 +788,9 @@ int main()
 
 		game_initialise_enemies(5);
 		game_initialise_bunkers();
+
+		auto* p = new player(screen, timer, input);
+		objects.push_back(p);
 
 		auto b_quit_game = false;
 		while (!b_quit_game)

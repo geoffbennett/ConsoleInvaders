@@ -1,12 +1,16 @@
 #pragma once
 
 #include "game_object.h"
+#include "console_screen.h"
 
-class player : public game_object
+class player final : public game_object
 {
-	float speed_ = 0.0f;
+	float f_speed_ = 40.0f;
+	
 public:
-	void update(game_timer* timer, keyboard* input) override;
-	void draw(wchar_t* buffer) override;
+	player(console_screen* screen, game_timer* timer, keyboard* input);
+	
+	void update() override;
+	void draw() override;
 };
 
