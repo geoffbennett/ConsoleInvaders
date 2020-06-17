@@ -18,16 +18,15 @@ class console_screen
 	void clip(float& x, float& y) const;
 
 public:
-	console_screen(const int width, const int height, const wchar_t* title);
+	console_screen(int width, int height, const wchar_t* title);
 	~console_screen();
 
 	void clear() const;
 	void flip() const;
 	void present() const;
 
-	void plot_char(float x, float y, const wchar_t chr) const;
-	void draw_text(float x, float y, const size_t size, const wchar_t* text) const;
-	void draw_text_centered(float y, const size_t size, const wchar_t* text) const;
-
+	void plot_char(float x, float y, wchar_t chr) const;
+	void draw_text(float x, float y, size_t size, const wchar_t* text) const;
+	void draw_text_centered(float y, size_t size, const wchar_t* text) const;
 };
 
