@@ -1,28 +1,27 @@
 #pragma once
 
 #include "console_screen.h"
-#include "game_timer.h"
 #include "keyboard.h"
 
 class game_object
 {
 	
 protected:
-	console_screen* p_screen_;
-	game_timer* p_timer_;
-	keyboard* p_input_;
-	
-	float x_ = 0.0f;
-	float y_ = 0.0f;
+	int x_ = 0;
+	int y_ = 0;
 	
 public:
-	game_object(console_screen* screen, game_timer* timer, keyboard* input);
+	game_object(int x, int y);
 	virtual ~game_object() = default;
 
-	float get_x() const { return x_; }
-	float get_y() const { return y_; }
+	int get_x() const { return x_; }
+	int get_y() const { return y_; }
+
+	void set_x(const int x) { x_ = x; }
+	void set_y(const int y) { y_ = y; }
 	
-	virtual void update() = 0;
-	virtual void draw() = 0;
+	virtual void update(keyboard* input, float elapsed) = 0;
+	virtual void draw(console_screen* screen) = 0;
+	virtual void collided(game_object* target) = 0;
 };
 

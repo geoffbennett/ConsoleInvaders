@@ -18,13 +18,13 @@ void console_screen::construct_buffer()
 	p_buffer_ = new wchar_t[n_width_ * n_height_];
 }
 
-void console_screen::clip(float& x, float& y) const
+void console_screen::clip(int& x, int& y) const
 {
-	if (x < 0.0f) x = 0.0f;
-	if (static_cast<int>(x) > n_width_ - 1) x = static_cast<float>(n_width_) - 1;
+	if (x < 0) x = 0;
+	if (x > n_width_ - 1) x = n_width_ - 1;
 
-	if (y < 0.0f) y = 0.0f;
-	if (static_cast<int>(y) > n_height_) y = static_cast<float>(n_height_) - 1;
+	if (y < 0) y = 0;
+	if (y > n_height_) y = n_height_ - 1;
 }
 
 console_screen::console_screen(const int width, const int height, const wchar_t* title)
@@ -71,21 +71,21 @@ void console_screen::present() const
 	WriteConsoleOutputCharacter(h_screen_, p_screen_, n_width_ * n_height_, { 0, 0 }, &dw_bytes_written);
 }
 
-void console_screen::plot_char(float x, float y, const wchar_t chr) const
+void console_screen::plot_char(int x, int y, const wchar_t chr) const
 {
 	clip(x, y);
-	p_buffer_[static_cast<int>(y) * n_width_ + static_cast<int>(x)] = chr;
+	p_buffer_[y * n_width_ + x] = chr;
 }
 
-void console_screen::draw_text(float x, float y, const size_t size, const wchar_t* text) const
+void console_screen::draw_text(int x, int y, const size_t size, const wchar_t* text) const
 {
 	clip(x, y);
-	swprintf_s(&p_buffer_[static_cast<int>(y) * n_width_ + static_cast<int>(x)], size, text);
+	swprintf_s(&p_buffer_[y * n_width_ + x], size, text);
 }
 
-void console_screen::draw_text_centered(float y, const size_t size, const wchar_t* text) const
+void console_screen::draw_text_centered(int y, const size_t size, const wchar_t* text) const
 {
-	auto left = static_cast<float>(n_width_ - size) / 2.0f;
+	auto left = static_cast<int>(n_width_ - size) / 2;
 	clip(left, y);
-	swprintf_s(&p_buffer_[static_cast<int>(y) * n_width_ + static_cast<int>(left)], size, text);
+	swprintf_s(&p_buffer_[y * n_width_ + left], size, text);
 }

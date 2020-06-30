@@ -4,47 +4,33 @@
 #include <vector>
 #include <algorithm>
 
-#include "game_object.h"
-#include "player.h"
-
-using namespace std;
-
 #include <Windows.h>
 
+#include "bunker.h"
+#include "enemy_manager.h"
+#include "game_object.h"
+#include "player.h"
 #include "console_screen.h"
 #include "game_timer.h"
 #include "keyboard.h"
 
+using namespace std;
+
 enum class e_mode
 {
-	mode_intro = 0,
-	mode_game = 1,
-	mode_win = 2,
-	mode_lost = 3
-};
-
-struct enemy
-{
-	float x = 0.0f;
-	float y = 0.0f;
-	wchar_t chr = 0;
-	int points = 0;
-	bool remove = false;
+	intro = 0,
+	game = 1,
+	game_init = 2,
+	win = 3,
+	lost = 4
 };
 
 struct enemy_bullet
 {
-	float x = 0;
-	float y = 0;
+	int x = 0;
+	int y = 0;
 	wchar_t chr = 0;
 	bool remove = false;
-};
-
-struct bunker
-{
-	float x = 0.0f;
-	float y = 0.0f;
-	wstring shape;
 };
 
 // Global game state
@@ -57,18 +43,15 @@ auto n_score = 0;
 auto n_high_score = 0;
 auto b_lost = false;
 auto b_won = false;
-auto n_mode = e_mode::mode_intro;
+auto n_mode = e_mode::intro;
 
 vector<game_object*> objects;
 
 // Player
-//auto f_player_speed = 30.0f;
-//auto f_player_row = static_cast<float>(n_screen_height - 4.0f);
-//auto f_player_pos = static_cast<float>(n_screen_width / 2.0f);
 auto b_player_shooting = false;
 
-auto f_bullet_x = 0.0f;
-auto f_bullet_y = 0.0f;
+auto n_bullet_x = 0;
+auto n_bullet_y = 0;
 auto f_bullet_speed = 30.0f;
 
 const short n_chr_player = 0x2569;
@@ -78,12 +61,13 @@ const short n_chr_player_bullet = 0x00b7;
 auto n_current_player_chr = n_chr_player;
 
 // Enemies
-vector<enemy> enemies;
 vector<enemy_bullet> enemy_bullets;
-auto f_enemy_speed = 2.0f;
+auto f_enemy_delta_t = 0.0f;
+auto f_enemy_speed = 500.0f;
+auto n_enemy_dir = 1;
 auto n_enemies_killed = 0;
 auto n_enemy_speed_increase_threshold = 10;
-auto n_enemy_speed_adjustment = 3.0f;
+auto f_enemy_speed_adjustment = 100.0f;
 auto b_enemy_shooting = false;
 auto n_enemy_shot_wait = 0;
 auto n_enemy_shot_reset = 5;
@@ -91,26 +75,11 @@ auto n_enemy_shot_reset = 5;
 auto n_enemy_bullet_speed_count = 0;
 auto n_enemy_bullet_speed_delta = 250;
 
-const short n_chr_alien_1_a = 0x005e;
-const short n_chr_alien_1_b = 0x002d;
-const short n_chr_alien_2_a = 0x0048;
-const short n_chr_alien_2_b = 0x0058;
-const short n_chr_alien_3_a = 0x004d;
-const short n_chr_alien_3_b = 0x0057;
-const short n_chr_alien_explosion = 0x002a;
 const short n_chr_alien_bullet_a = 0x007b;
 const short n_chr_alien_bullet_b = 0x007d;
 
 // Bunkers
-const short n_100_pc = 0x2588;
-const short n_075_pc = 0x2593;
-const short n_050_px = 0x2592;
-const short n_025_pc = 0x2591;
-const short n_000_pc = 0x0020;
-vector<bunker> bunkers;
-const auto n_bunker_width = 5;
-const auto n_bunker_height = 4;
-const auto f_bunker_y = static_cast<float>(n_screen_height) - 10.0f;
+const auto n_bunker_y = n_screen_height - 8;
 const auto n_bunker_1_x = 15;
 const auto n_bunker_2_x = 30;
 const auto n_bunker_3_x = 45;
@@ -137,134 +106,62 @@ const wchar_t* msg_speed = L"Speed: %04d";
 
 // === GAME ===
 
-bool pos_cmp(const float f1, const float f2)
-{
-	// we don't deal with negative screen space, so we should be
-	// able to use math to compare two floats to save the cost of
-	// casting to an integer, but I don't know if that would be
-	// faster. Need to experiment.
-	return static_cast<int>(f1) == static_cast<int>(f2);
-}
+//bool game_player_bullet_hit_enemy()
+//{
+//	for (auto& enemy : enemies)
+//	{
+//		if ((enemy.x == n_bullet_x) && (enemy.y == n_bullet_y))
+//		{
+//			n_score += enemy.points;
+//			enemy.chr = n_chr_alien_explosion;
+//			return true;
+//		}
+//	}
+//	return false;
+//}
 
-void game_initialise_enemies(const float start_pos)
-{
-	const auto start_x = 10.0f;
-	for (auto r = 0; r < 5; r++)
-	{
-		for (auto c = 0; c < 11; c++)
-		{
-			switch (r)
-			{
-			case 0:
-				enemies.push_back({ start_x + static_cast<float>(c) * 4, start_pos + static_cast<float>(r) * 2, L'^', 30 });
-				break;
-			case 1:
-			case 2:
-				enemies.push_back({ start_x + static_cast<float>(c) * 4, start_pos + static_cast<float>(r) * 2, L'H', 20 });
-				break;
-			default:
-				enemies.push_back({ start_x + static_cast<float>(c) * 4, start_pos + static_cast<float>(r) * 2, L'M', 10 });
-				break;
-			}
-		}
-	}
-}
-
-void game_initialise_bunkers()
-{
-	bunker b1;
-	b1.y = f_bunker_y;
-	b1.x = n_bunker_1_x;
-	b1.shape.append(L".444.");
-	b1.shape.append(L"44444");
-	b1.shape.append(L"44444");
-	b1.shape.append(L"4...4");
-	bunkers.push_back(b1);
-
-	bunker b2;
-	b2.y = f_bunker_y;
-	b2.x = n_bunker_2_x;
-	b2.shape.append(L".444.");
-	b2.shape.append(L"44444");
-	b2.shape.append(L"44444");
-	b2.shape.append(L"4...4");
-	bunkers.push_back(b2);
-
-	bunker b3;
-	b3.y = f_bunker_y;
-	b3.x = n_bunker_3_x;
-	b3.shape.append(L".444.");
-	b3.shape.append(L"44444");
-	b3.shape.append(L"44444");
-	b3.shape.append(L"4...4");
-	bunkers.push_back(b3);
-
-	bunker b4;
-	b4.y = f_bunker_y;
-	b4.x = n_bunker_4_x;
-	b4.shape.append(L".444.");
-	b4.shape.append(L"44444");
-	b4.shape.append(L"44444");
-	b4.shape.append(L"4...4");
-	bunkers.push_back(b4);
-}
-
-bool game_player_bullet_hit_enemy()
-{
-	for (auto& enemy : enemies)
-	{
-		if (pos_cmp(enemy.x, f_bullet_x) && pos_cmp(enemy.y, f_bullet_y))
-		{
-			n_score += enemy.points;
-			enemy.chr = n_chr_alien_explosion;
-			return true;
-		}
-	}
-	return false;
-}
-
-bool game_player_bullet_hit_bunker()
-{
-	for (auto& bunker : bunkers)
-	{
-		for (auto x = 0; x < n_bunker_width; x++)
-		{
-			for (auto y = 0; y < n_bunker_height; y++)
-			{
-				if (bunker.shape[y * n_bunker_width + x] != L'.')
-				{
-					if (pos_cmp(bunker.x + x, f_bullet_x) && pos_cmp(bunker.y + y, f_bullet_y))
-					{
-						auto b_hit = false;
-						switch (bunker.shape[y * n_bunker_width + x])
-						{
-						case '4':
-							bunker.shape[y * n_bunker_width + x] = '3';
-							b_hit = true;
-							break;
-						case '3':
-							bunker.shape[y * n_bunker_width + x] = '2';
-							b_hit = true;
-							break;
-						case '2':
-							bunker.shape[y * n_bunker_width + x] = '1';
-							b_hit = true;
-							break;
-						case '1':
-							bunker.shape[y * n_bunker_width + x] = '0';
-							b_hit = true;
-							break;
-						default:
-							break;
-						}
-						return b_hit;
-					}
-				}
-			}
-		}
-	}
-	return false;
-}
+//bool game_player_bullet_hit_bunker()
+//{
+//	for (auto& bunker : bunkers)
+//	{
+//		for (auto x = 0; x < n_bunker_width; x++)
+//		{
+//			for (auto y = 0; y < n_bunker_height; y++)
+//			{
+//				if (bunker.shape_[y * n_bunker_width + x] != L'.')
+//				{
+//					if ((bunker.x + x == n_bullet_x) && (bunker.y + y == n_bullet_y))
+//					{
+//						auto b_hit = false;
+//						switch (bunker.shape_[y * n_bunker_width + x])
+//						{
+//						case '4':
+//							bunker.shape_[y * n_bunker_width + x] = '3';
+//							b_hit = true;
+//							break;
+//						case '3':
+//							bunker.shape_[y * n_bunker_width + x] = '2';
+//							b_hit = true;
+//							break;
+//						case '2':
+//							bunker.shape_[y * n_bunker_width + x] = '1';
+//							b_hit = true;
+//							break;
+//						case '1':
+//							bunker.shape_[y * n_bunker_width + x] = '0';
+//							b_hit = true;
+//							break;
+//						default:
+//							break;
+//						}
+//						return b_hit;
+//					}
+//				}
+//			}
+//		}
+//	}
+//	return false;
+//}
 
 bool game_enemy_bullet_hit_player()
 {
@@ -279,97 +176,97 @@ bool game_enemy_bullet_hit_player()
 	return false;
 }
 
-bool game_enemy_bullet_hit_bunker()
-{
-	for (auto& bunker : bunkers)
-	{
-		for (auto x = 0; x < n_bunker_width; x++)
-		{
-			for (auto y = 0; y < n_bunker_height; y++)
-			{
-				if (bunker.shape[y * n_bunker_width + x] != L'.')
-				{
-					for (auto& bullet : enemy_bullets)
-					{
-						if (pos_cmp(bunker.x + x, bullet.x) && pos_cmp(bunker.y + y, bullet.y))
-						{
-							auto b_hit = false;
-							switch (bunker.shape[y * n_bunker_width + x])
-							{
-							case '4':
-								bunker.shape[y * n_bunker_width + x] = '3';
-								b_hit = true;
-								break;
-							case '3':
-								bunker.shape[y * n_bunker_width + x] = '2';
-								b_hit = true;
-								break;
-							case '2':
-								bunker.shape[y * n_bunker_width + x] = '1';
-								b_hit = true;
-								break;
-							case '1':
-								bunker.shape[y * n_bunker_width + x] = '0';
-								b_hit = true;
-								break;
-							default:
-								break;
-							}
-							return b_hit;
-						}
-					}
-				}
-			}
-		}
-	}
-	return false;
-}
+//bool game_enemy_bullet_hit_bunker()
+//{
+//	for (auto& bunker : bunkers)
+//	{
+//		for (auto x = 0; x < n_bunker_width; x++)
+//		{
+//			for (auto y = 0; y < n_bunker_height; y++)
+//			{
+//				if (bunker.shape_[y * n_bunker_width + x] != L'.')
+//				{
+//					for (auto& bullet : enemy_bullets)
+//					{
+//						if ((bunker.x + x == bullet.x) && (bunker.y + y == bullet.y))
+//						{
+//							auto b_hit = false;
+//							switch (bunker.shape_[y * n_bunker_width + x])
+//							{
+//							case '4':
+//								bunker.shape_[y * n_bunker_width + x] = '3';
+//								b_hit = true;
+//								break;
+//							case '3':
+//								bunker.shape_[y * n_bunker_width + x] = '2';
+//								b_hit = true;
+//								break;
+//							case '2':
+//								bunker.shape_[y * n_bunker_width + x] = '1';
+//								b_hit = true;
+//								break;
+//							case '1':
+//								bunker.shape_[y * n_bunker_width + x] = '0';
+//								b_hit = true;
+//								break;
+//							default:
+//								break;
+//							}
+//							return b_hit;
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+//	return false;
+//}
 
-bool game_enemy_hit_bunker()
-{
-	for (auto& bunker : bunkers)
-	{
-		for (auto& enemy : enemies)
-		{
-			for (auto x = 0; x < n_bunker_width; x++)
-			{
-				for (auto y = 0; y < n_bunker_height; y++)
-				{
-					if (bunker.shape[y * n_bunker_width + x] != L'.')
-					{
-						if (pos_cmp(bunker.x + x, enemy.x) && pos_cmp(bunker.y + y, enemy.y))
-						{
-							auto b_hit = false;
-							switch (bunker.shape[y * n_bunker_width + x])
-							{
-							case '4':
-								bunker.shape[y * n_bunker_width + x] = '3';
-								b_hit = true;
-								break;
-							case '3':
-								bunker.shape[y * n_bunker_width + x] = '2';
-								b_hit = true;
-								break;
-							case '2':
-								bunker.shape[y * n_bunker_width + x] = '1';
-								b_hit = true;
-								break;
-							case '1':
-								bunker.shape[y * n_bunker_width + x] = '0';
-								b_hit = true;
-								break;
-							default:
-								break;
-							}
-							return b_hit;
-						}
-					}
-				}
-			}
-		}
-	}
-	return false;
-}
+//bool game_enemy_hit_bunker()
+//{
+//	for (auto& bunker : bunkers)
+//	{
+//		for (auto& enemy : enemies)
+//		{
+//			for (auto x = 0; x < n_bunker_width; x++)
+//			{
+//				for (auto y = 0; y < n_bunker_height; y++)
+//				{
+//					if (bunker.shape[y * n_bunker_width + x] != L'.')
+//					{
+//						if ((bunker.x + x == enemy.x) && (bunker.y + y == enemy.y))
+//						{
+//							auto b_hit = false;
+//							switch (bunker.shape[y * n_bunker_width + x])
+//							{
+//							case '4':
+//								bunker.shape[y * n_bunker_width + x] = '3';
+//								b_hit = true;
+//								break;
+//							case '3':
+//								bunker.shape[y * n_bunker_width + x] = '2';
+//								b_hit = true;
+//								break;
+//							case '2':
+//								bunker.shape[y * n_bunker_width + x] = '1';
+//								b_hit = true;
+//								break;
+//							case '1':
+//								bunker.shape[y * n_bunker_width + x] = '0';
+//								b_hit = true;
+//								break;
+//							default:
+//								break;
+//							}
+//							return b_hit;
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+//	return false;
+//}
 
 void game_process_player(const float elapsed, keyboard* input)
 {
@@ -387,32 +284,32 @@ void game_process_bullet(const float elapsed, keyboard* input)
 	//if (!b_player_shooting && input->get_key(VK_SPACE).held)
 	//{
 	//	b_player_shooting = true;
-	//	f_bullet_x = f_player_pos;
-	//	f_bullet_y = f_player_row;
+	//	n_bullet_x = f_player_pos;
+	//	n_bullet_y = f_player_row;
 	//}
 
 	if (b_player_shooting)
 	{
-		f_bullet_y -= f_bullet_speed * elapsed;
-		if (f_bullet_y <= 1)
-		{
-			b_player_shooting = false;
-		}
+		//n_bullet_y -= f_bullet_speed * elapsed;
+		//if (n_bullet_y <= 1)
+		//{
+		//	b_player_shooting = false;
+		//}
 
-		if (game_player_bullet_hit_enemy())
-		{
-			n_enemies_killed++;
-			if (n_enemies_killed % n_enemy_speed_increase_threshold == 0)
-			{
-				f_enemy_speed += n_enemy_speed_adjustment;
-			}
-			b_player_shooting = false;
-		}
+		//if (game_player_bullet_hit_enemy())
+		//{
+		//	n_enemies_killed++;
+		//	if (n_enemies_killed % n_enemy_speed_increase_threshold == 0)
+		//	{
+		//		f_enemy_speed += f_enemy_speed_adjustment;
+		//	}
+		//	b_player_shooting = false;
+		//}
 
-		if (game_player_bullet_hit_bunker())
-		{
-			b_player_shooting = false;
-		}
+		//if (game_player_bullet_hit_bunker())
+		//{
+		//	b_player_shooting = false;
+		//}
 	}
 }
 
@@ -485,10 +382,10 @@ void game_process_enemy_bullet(const float elapsed)
 			}
 		}
 
-		if (game_enemy_bullet_hit_bunker())
-		{
-			bullet.remove = true;
-		}
+		//if (game_enemy_bullet_hit_bunker())
+		//{
+		//	bullet.remove = true;
+		//}
 
 		//if (pos_cmp(bullet.y, f_player_row))
 		//{
@@ -499,120 +396,77 @@ void game_process_enemy_bullet(const float elapsed)
 	game_enemy_bullet_remove_dead();
 }
 
-void game_enemy_update_sprites(float elapsed)
-{
-	for (auto& enemy : enemies)
-	{
-		if (enemy.chr == n_chr_alien_3_a)
-		{
-			enemy.chr = n_chr_alien_3_b;
-		}
-		else if (enemy.chr == n_chr_alien_3_b)
-		{
-			enemy.chr = n_chr_alien_3_a;
-		}
+//void game_enemy_remove_dead()
+//{
+//	enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](enemy& e) { return e.remove; }), enemies.end());
+//	if (enemies.empty())
+//	{
+//		n_mode = e_mode::win;
+//	}
+//}
 
-		if (enemy.chr == n_chr_alien_2_a)
-		{
-			enemy.chr = n_chr_alien_2_b;
-		}
-		else if (enemy.chr == n_chr_alien_2_b)
-		{
-			enemy.chr = n_chr_alien_2_a;
-		}
-
-		if (enemy.chr == n_chr_alien_1_a)
-		{
-			enemy.chr = n_chr_alien_1_b;
-		}
-		else if (enemy.chr == n_chr_alien_1_b)
-		{
-			enemy.chr = n_chr_alien_1_a;
-		}
-
-		if (enemy.chr == n_chr_alien_explosion)
-		{
-			enemy.remove = true;
-		}
-	}
-}
-
-void game_enemy_remove_dead()
-{
-	enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](enemy& e) { return e.remove; }), enemies.end());
-	if (enemies.empty())
-	{
-		n_mode = e_mode::mode_win;
-	}
-}
-
-void game_process_enemies(const float elapsed)
-{
-	auto b_hit_wall = false;
-	auto b_action_pulse = false;
-	for (auto& enemy : enemies)
-	{
-		const auto old_x = static_cast<int>(enemy.x);
-		enemy.x += f_enemy_speed * elapsed;
-		b_action_pulse = old_x != static_cast<int>(enemy.x);
-
-		if (enemy.x >= static_cast<float>(n_screen_width))
-		{
-			b_hit_wall = true;
-			enemy.x = static_cast<float>(n_screen_width);
-		}
-		else if (enemy.x <= 0.0f)
-		{
-			b_hit_wall = true;
-			enemy.x = 0.0f;
-		}
-	}
-
-	if (b_hit_wall)
-	{
-		for (auto& enemy : enemies)
-		{
-			enemy.y++;
-			//if (!b_lost)
-			//{
-			//	b_lost = (enemy.y >= f_player_row);
-			//}
-		}
-
-		f_enemy_speed *= -1;
-	}
-
-	if (game_enemy_hit_bunker())
-	{
-		b_lost = true;
-	}
-
-	if (b_action_pulse)
-	{
-		game_enemy_update_sprites(elapsed);
-		game_enemy_remove_dead();
-		game_enemy_shoot(elapsed);
-	}
-}
-
-void game_draw_player(console_screen* screen)
-{
-	//screen->plot_char(f_player_pos, f_player_row, n_current_player_chr);
-}
+//void game_process_enemies(const float elapsed)
+//{
+//	return;
+//	
+//	f_enemy_delta_t += elapsed;
+//	if (f_enemy_delta_t < f_enemy_speed)
+//	{		
+//		return;
+//	}
+//	
+//	auto b_hit_wall = false;
+//	auto b_action_pulse = false;
+//	for (auto& enemy : enemies)
+//	{
+//		const auto old_x = enemy.x;
+//		enemy.x += n_enemy_dir;
+//		b_action_pulse = old_x != enemy.x;
+//
+//		if (enemy.x >= n_screen_width)
+//		{
+//			b_hit_wall = true;
+//			enemy.x = n_screen_width;
+//		}
+//		else if (enemy.x <= 0)
+//		{
+//			b_hit_wall = true;
+//			enemy.x = 0;
+//		}
+//	}
+//
+//	if (b_hit_wall)
+//	{
+//		for (auto& enemy : enemies)
+//		{
+//			enemy.y++;
+//			//if (!b_lost)
+//			//{
+//			//	b_lost = (enemy.y >= f_player_row);
+//			//}
+//		}
+//
+//		n_enemy_dir *= -1;
+//	}
+//
+//	if (game_enemy_hit_bunker())
+//	{
+//		b_lost = true;
+//	}
+//
+//	if (b_action_pulse)
+//	{
+//		game_enemy_update_sprites(elapsed);
+//		game_enemy_remove_dead();
+//		game_enemy_shoot(elapsed);
+//	}
+//}
 
 void game_draw_bullet(console_screen* screen)
 {
 	if (b_player_shooting)
 	{
-		screen->plot_char(f_bullet_x, f_bullet_y, n_chr_player_bullet);
-	}
-}
-
-void game_draw_enemies(console_screen* screen)
-{
-	for (const auto enemy : enemies)
-	{
-		screen->plot_char(enemy.x, enemy.y, enemy.chr);
+		screen->plot_char(n_bullet_x, n_bullet_y, n_chr_player_bullet);
 	}
 }
 
@@ -624,47 +478,11 @@ void game_draw_enemy_bullets(console_screen* screen)
 	}
 }
 
-void game_draw_bunkers(console_screen* screen)
-{
-	for (auto b = 0; b < 4; b++)
-	{
-		for (auto x = 0; x < n_bunker_width; x++)
-		{
-			for (auto y = 0; y < n_bunker_height; y++)
-			{
-				if (bunkers[b].shape[y * n_bunker_width + x] != L'.')
-				{
-					short n_bunker_chr;
-					switch (bunkers[b].shape[y * n_bunker_width + x])
-					{
-					case '4':
-						n_bunker_chr = n_100_pc;
-						break;
-					case '3':
-						n_bunker_chr = n_075_pc;
-						break;
-					case '2':
-						n_bunker_chr = n_050_px;
-						break;
-					case '1':
-						n_bunker_chr = n_025_pc;
-						break;
-					default:
-						n_bunker_chr = n_000_pc;
-						break;
-					}
-					screen->plot_char(bunkers[b].x + x, bunkers[b].y + y, n_bunker_chr);
-				}
-			}
-		}
-	}
-}
-
 void game_draw_ground(console_screen* screen)
 {
 	for (auto i = 0; i < n_screen_width; i++)
 	{
-		screen->plot_char(static_cast<float>(i), static_cast<float>(n_screen_height) - 3, L'_');
+		screen->plot_char(i, n_screen_height - 2, L'_');
 	}
 }
 
@@ -683,7 +501,7 @@ const wchar_t* game_get_lives_message()
 
 void game_draw_hud(const int fps, keyboard* input, console_screen* screen)
 {
-	screen->draw_text_centered(static_cast<float>(n_screen_height) - 1, std::wcslen(msg_quit) + 1, msg_quit);
+	screen->draw_text_centered(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
 
 	wchar_t s[80];
 	screen->draw_text(1, 0, std::wcslen(msg_score) + 1, msg_score);
@@ -696,86 +514,83 @@ void game_draw_hud(const int fps, keyboard* input, console_screen* screen)
 
 	if (b_draw_stats)
 	{
-		screen->draw_text(static_cast<float>(n_screen_width) - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
+		screen->draw_text(n_screen_width - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
 		swprintf_s(s, 80, msg_key_state, input->get_key(VK_LEFT).held, input->get_key(VK_RIGHT).held, input->get_key(VK_SPACE).held);
-		screen->draw_text(static_cast<float>(n_screen_width) - 6, 1, 6, s);
+		screen->draw_text(n_screen_width - 6, 1, 6, s);
 		swprintf_s(s, 80, msg_fps, fps);
-		screen->draw_text(static_cast<float>(n_screen_width) - 10, 2, 10, s);
+		screen->draw_text(n_screen_width - 10, 2, 10, s);
 		swprintf_s(s, 80, msg_killed, n_enemies_killed);
-		screen->draw_text(static_cast<float>(n_screen_width) - 10, 3, 10, s);
+		screen->draw_text(n_screen_width - 10, 3, 10, s);
 		swprintf_s(s, 80, msg_speed, f_enemy_speed);
-		screen->draw_text(static_cast<float>(n_screen_width) - 12, 4, 12, s);
+		screen->draw_text(n_screen_width - 12, 4, 12, s);
 	}
 
 	const auto* lives_msg = game_get_lives_message();
-	screen->draw_text(1, static_cast<float>(n_screen_height) - 2, std::wcslen(lives_msg) + 1, lives_msg);
+	screen->draw_text(1, n_screen_height - 1, std::wcslen(lives_msg) + 1, lives_msg);
 }
 
 // === MODES ===
 
 void mode_intro_screen(const float elapsed, keyboard* input, console_screen* screen)
 {
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_title) + 1, msg_title);
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_why) + 1, msg_why);
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) + 4, std::wcslen(msg_start) + 1, msg_start);
-	screen->draw_text_centered((static_cast<float>(n_screen_height) - 1), std::wcslen(msg_quit) + 1, msg_quit);
+	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_title) + 1, msg_title);
+	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_why) + 1, msg_why);
+	screen->draw_text_centered((n_screen_height / 2) + 4, std::wcslen(msg_start) + 1, msg_start);
+	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
 	
 	if (input->get_key(VK_RETURN).pressed)
 	{
-		n_mode = e_mode::mode_game;
+		n_mode = e_mode::game;
 	}
 }
 
 void mode_game_play(const float elapsed, keyboard* input, console_screen* screen, const int fps)
 {
-	//game_process_player(elapsed, input);
-	game_process_bullet(elapsed, input);
-	game_process_enemies(elapsed);
-	game_process_enemy_bullet(elapsed);
+	//game_process_bullet(elapsed, input);
+	//game_process_enemies(elapsed);
+	//game_process_enemy_bullet(elapsed);
 
-	game_draw_bunkers(screen);
-	//game_draw_player(screen);
-	game_draw_bullet(screen);
-	game_draw_enemies(screen);
-	game_draw_enemy_bullets(screen);
+	//game_draw_bunkers(screen);
+	//game_draw_bullet(screen);
+	//game_draw_enemy_bullets(screen);
 	game_draw_ground(screen);
 
 	for (auto& o : objects)
 	{
-		o->update();
-		o->draw();
+		o->update(input, elapsed);
+		o->draw(screen);
 	}
 
 	game_draw_hud(fps, input, screen);
 
 	if (b_lost)
 	{
-		n_mode = e_mode::mode_lost;
+		n_mode = e_mode::lost;
 	}
 }
 
 void mode_win_screen(const float elapsed, keyboard* input, console_screen* screen)
 {
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
+	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
+	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
 
 	wchar_t s[80];
 	swprintf_s(s, 80, msg_score_fmt, n_score);
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 1, std::wcslen(s) + 1, s);
+	screen->draw_text_centered((n_screen_height / 2) - 1, std::wcslen(s) + 1, s);
 	
-	screen->draw_text_centered((static_cast<float>(n_screen_height) - 1), std::wcslen(msg_quit) + 1, msg_quit);
+	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
 }
 
 void mode_loss_screen(const float elapsed, keyboard* input, console_screen* screen)
 {
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
+	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
+	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
 
 	wchar_t s[80];
 	swprintf_s(s, 80, msg_score_fmt, n_score);
-	screen->draw_text_centered((static_cast<float>(n_screen_height) / 2) - 1, std::wcslen(s) + 1, s);
+	screen->draw_text_centered((n_screen_height / 2) - 1, std::wcslen(s) + 1, s);
 
-	screen->draw_text_centered((static_cast<float>(n_screen_height) - 1), std::wcslen(msg_quit) + 1, msg_quit);
+	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
 }
 
 int main()
@@ -786,13 +601,8 @@ int main()
 		auto* const input = new keyboard();
 		auto* const screen = new console_screen(80, 30, msg_title);
 
-		game_initialise_enemies(5);
-		game_initialise_bunkers();
-
-		auto* p = new player(screen, timer, input);
-		objects.push_back(p);
-
 		auto b_quit_game = false;
+		auto b_init_game = false;
 		while (!b_quit_game)
 		{
 			const auto f_elapsed = timer->get_elapsed();
@@ -806,13 +616,36 @@ int main()
 
 			switch (n_mode)
 			{
-			case e_mode::mode_intro:
+			case e_mode::intro:
 				mode_intro_screen(f_elapsed, input, screen);
 				break;
-			case e_mode::mode_game:
+			case e_mode::game:
+				if (!b_init_game)
+				{
+					auto* p = new player(screen->get_width() / 2, screen->get_height() - 3);
+					objects.push_back(p);
+
+					auto* em = new enemy_manager(10, 5);
+					objects.push_back(em);
+
+					auto* b1 = new bunker(n_bunker_1_x, n_bunker_y);
+					objects.push_back(b1);
+
+					auto* b2 = new bunker(n_bunker_2_x, n_bunker_y);
+					objects.push_back(b2);
+
+					auto* b3 = new bunker(n_bunker_3_x, n_bunker_y);
+					objects.push_back(b3);
+
+					auto* b4 = new bunker(n_bunker_4_x, n_bunker_y);
+					objects.push_back(b4);
+
+					b_init_game = true;
+				}
+				
 				mode_game_play(f_elapsed, input, screen, timer->get_fps());
 				break;
-			case e_mode::mode_win:
+			case e_mode::win:
 				mode_win_screen(f_elapsed, input, screen);
 				break;
 			default:

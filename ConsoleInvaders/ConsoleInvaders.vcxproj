@@ -138,15 +138,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bunker.cpp" />
     <ClCompile Include="ConsoleInvaders.cpp" />
     <ClCompile Include="console_screen.cpp" />
+    <ClCompile Include="enemy_bottom.cpp" />
+    <ClCompile Include="enemy_manager.cpp" />
+    <ClCompile Include="enemy_middle.cpp" />
+    <ClCompile Include="enemy_top.cpp" />
     <ClCompile Include="game_object.cpp" />
     <ClCompile Include="game_timer.cpp" />
     <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bunker.h" />
     <ClInclude Include="console_screen.h" />
+    <ClInclude Include="enemy_bottom.h" />
+    <ClInclude Include="enemy_manager.h" />
+    <ClInclude Include="enemy_middle.h" />
+    <ClInclude Include="enemy_top.h" />
     <ClInclude Include="game_object.h" />
     <ClInclude Include="game_timer.h" />
     <ClInclude Include="keyboard.h" />

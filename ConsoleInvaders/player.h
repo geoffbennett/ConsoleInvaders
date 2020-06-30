@@ -5,12 +5,14 @@
 
 class player final : public game_object
 {
-	float f_speed_ = 40.0f;
+	const float f_speed_ = 40.0f;
+	float f_delta_t_ = 0.0f;	
 	
 public:
-	player(console_screen* screen, game_timer* timer, keyboard* input);
+	player(int x, int y);
 	
-	void update() override;
-	void draw() override;
+	void update(keyboard* input, float elapsed) override;
+	void draw(console_screen* screen) override;
+	void collided(game_object* target) override;
 };
 
