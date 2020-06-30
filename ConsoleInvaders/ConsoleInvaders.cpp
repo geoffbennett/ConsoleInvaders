@@ -556,6 +556,7 @@ void mode_game_play(const float elapsed, keyboard* input, console_screen* screen
 
 	for (auto& o : objects)
 	{
+		o->collided_with(&objects);
 		o->update(input, elapsed);
 		o->draw(screen);
 	}

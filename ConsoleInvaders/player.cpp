@@ -19,6 +19,7 @@ void player::draw(console_screen* screen)
 	screen->plot_char(x_, y_, L'\u2569');
 }
 
-void player::collided(game_object* target)
+void player::collided_with(std::vector<game_object*>* game_objects)
 {
+	// player doesn't collide with anything
 }

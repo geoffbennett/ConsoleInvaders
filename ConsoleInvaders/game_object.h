@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "console_screen.h"
 #include "keyboard.h"
 
@@ -22,6 +24,6 @@ public:
 	
 	virtual void update(keyboard* input, float elapsed) = 0;
 	virtual void draw(console_screen* screen) = 0;
-	virtual void collided(game_object* target) = 0;
+	virtual void collided_with(std::vector<game_object*>* game_objects) = 0;
 };
 

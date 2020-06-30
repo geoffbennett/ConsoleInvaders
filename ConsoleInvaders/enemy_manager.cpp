@@ -81,6 +81,7 @@ void enemy_manager::draw(console_screen* screen)
 	}
 }
 
-void enemy_manager::collided(game_object* target)
+void enemy_manager::collided_with(std::vector<game_object*>* game_objects)
 {
+	// enemies collide with bunkers or the player
 }

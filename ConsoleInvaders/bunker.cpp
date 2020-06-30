@@ -41,6 +41,7 @@ void bunker::draw(console_screen* screen)
 	}
 }
 
-void bunker::collided(game_object* target)
+void bunker::collided_with(std::vector<game_object*>* game_objects)
 {
+	// bunkers don't collide with anything.
 }

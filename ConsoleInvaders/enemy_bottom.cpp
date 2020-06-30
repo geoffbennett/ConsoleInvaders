@@ -17,6 +17,7 @@ void enemy_bottom::update(keyboard* input, float elapsed)
 	}
 }
 
-void enemy_bottom::collided(game_object* target)
+void enemy_bottom::collided_with(std::vector<game_object*>* game_objects)
 {
+	// enemies collide with bunkers or the player
 }

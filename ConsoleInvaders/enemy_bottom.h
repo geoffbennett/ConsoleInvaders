@@ -20,5 +20,5 @@ public:
 
 	void draw(console_screen* screen) override;
 	void update(keyboard* input, float elapsed) override;
-	void collided(game_object* target) override;
+	void collided_with(std::vector<game_object*>* game_objects) override;
 };
