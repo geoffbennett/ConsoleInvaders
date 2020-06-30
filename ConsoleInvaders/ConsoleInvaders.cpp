@@ -549,7 +549,6 @@ void mode_game_play(const float elapsed, keyboard* input, console_screen* screen
 	//game_process_enemies(elapsed);
 	//game_process_enemy_bullet(elapsed);
 
-	//game_draw_bunkers(screen);
 	//game_draw_bullet(screen);
 	//game_draw_enemy_bullets(screen);
 	game_draw_ground(screen);
