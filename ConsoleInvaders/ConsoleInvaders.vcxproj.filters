@@ -48,6 +48,9 @@
     <ClCompile Include="bunker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bullet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_timer.h">
@@ -78,6 +81,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="bunker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

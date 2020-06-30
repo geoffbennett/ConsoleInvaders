@@ -138,6 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bullet.cpp" />
     <ClCompile Include="bunker.cpp" />
     <ClCompile Include="ConsoleInvaders.cpp" />
     <ClCompile Include="console_screen.cpp" />
@@ -151,6 +152,7 @@
     <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bullet.h" />
     <ClInclude Include="bunker.h" />
     <ClInclude Include="console_screen.h" />
     <ClInclude Include="enemy_bottom.h" />
