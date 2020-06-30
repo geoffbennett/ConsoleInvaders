@@ -20,9 +20,8 @@ enum class e_mode
 {
 	intro = 0,
 	game = 1,
-	game_init = 2,
-	win = 3,
-	lost = 4
+	win = 2,
+	lost = 3
 };
 
 struct enemy_bullet
@@ -661,6 +660,11 @@ int main()
 			b_quit_game = input->get_key(VK_ESCAPE).pressed;
 		}
 
+		for(auto& go : objects)
+		{
+			delete go;
+		}
+		
 		// ERROR: Why does this cause a heap corruption?
 		// delete input;
 		delete timer;
