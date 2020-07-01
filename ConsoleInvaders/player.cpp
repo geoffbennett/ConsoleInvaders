@@ -4,7 +4,7 @@ player::player(const int x, const int y) : game_object(x, y)
 {
 }
 
-void player::update(keyboard* input, const float elapsed)
+void player::update(std::vector<game_object*>* game_objects, keyboard* input, const float elapsed)
 {
 	f_delta_t_ += f_speed_ * elapsed;
 	if (f_delta_t_ < 1.0f) return;

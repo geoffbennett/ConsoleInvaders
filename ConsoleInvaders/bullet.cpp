@@ -1,6 +1,6 @@
 #include "bullet.h"
 
-void bullet::update(keyboard* input, float elapsed)
+void bullet::update(std::vector<game_object*>* game_objects, keyboard* input, float elapsed)
 {
 }
 

@@ -4,7 +4,7 @@ bunker::bunker(const int x, const int y) : game_object(x, y)
 {
 }
 
-void bunker::update(keyboard* input, float elapsed)
+void bunker::update(std::vector<game_object*>* game_objects, keyboard* input, float elapsed)
 {
 }
 

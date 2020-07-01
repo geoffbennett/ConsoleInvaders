@@ -22,7 +22,7 @@ public:
 	void set_x(const int x) { x_ = x; }
 	void set_y(const int y) { y_ = y; }
 	
-	virtual void update(keyboard* input, float elapsed) = 0;
+	virtual void update(std::vector<game_object*>* game_objects, keyboard* input, float elapsed) = 0;
 	virtual void draw(console_screen* screen) = 0;
 	virtual void collided_with(std::vector<game_object*>* game_objects) = 0;
 };
