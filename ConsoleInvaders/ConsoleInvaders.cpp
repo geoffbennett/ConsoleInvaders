@@ -553,6 +553,8 @@ void mode_game_play(const float elapsed, keyboard* input, console_screen* screen
 	//game_draw_enemy_bullets(screen);
 	game_draw_ground(screen);
 
+	objects.erase(std::remove_if(objects.begin(), objects.end(), [](game_object* g) { return g->get_deleted(); }), objects.end());
+
 	for (auto& o : objects)
 	{
 		o->collided_with(&objects);

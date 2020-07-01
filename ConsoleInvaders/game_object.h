@@ -7,8 +7,8 @@
 
 class game_object
 {
-	
 protected:
+	bool deleted_ = false;
 	int x_ = 0;
 	int y_ = 0;
 	
@@ -21,6 +21,9 @@ public:
 
 	void set_x(const int x) { x_ = x; }
 	void set_y(const int y) { y_ = y; }
+
+	bool get_deleted() const { return deleted_; }
+	void set_deleted(const bool d) { deleted_ = d; }
 	
 	virtual void update(std::vector<game_object*>* game_objects, keyboard* input, float elapsed) = 0;
 	virtual void draw(console_screen* screen) = 0;
