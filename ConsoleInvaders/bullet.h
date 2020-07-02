@@ -10,8 +10,8 @@ class bullet final : public game_object
 public:
 	bullet(const int x, const int y) : game_object(x, y) {}
 
-	void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed) override;
+	void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state) override;
 	void draw(console_screen* screen) override;
-	void collided_with(std::vector<game_object*>& game_objects) override;
+	void collided_with(std::vector<game_object*>& game_objects, game_state& state) override;
 };
 

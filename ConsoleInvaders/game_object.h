@@ -5,6 +5,8 @@
 #include "console_screen.h"
 #include "keyboard.h"
 
+struct game_state;
+
 class game_object
 {
 protected:
@@ -25,8 +27,8 @@ public:
 	bool get_deleted() const { return deleted_; }
 	void set_deleted(const bool d) { deleted_ = d; }
 	
-	virtual void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed) = 0;
+	virtual void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state) = 0;
 	virtual void draw(console_screen* screen) = 0;
-	virtual void collided_with(std::vector<game_object*>& game_objects) = 0;
+	virtual void collided_with(std::vector<game_object*>& game_objects, game_state& state) = 0;
 };
 

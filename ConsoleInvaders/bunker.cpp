@@ -5,7 +5,7 @@ bunker::bunker(const int x, const int y) : game_object(x, y)
 {
 }
 
-void bunker::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed)
+void bunker::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state)
 {
 }
 
@@ -42,7 +42,7 @@ void bunker::draw(console_screen* screen)
 	}
 }
 
-void bunker::collided_with(std::vector<game_object*>& game_objects)
+void bunker::collided_with(std::vector<game_object*>& game_objects, game_state& state)
 {
 	for(auto* o : game_objects)
 	{

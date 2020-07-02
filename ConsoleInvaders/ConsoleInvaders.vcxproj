@@ -147,6 +147,7 @@
     <ClCompile Include="enemy_middle.cpp" />
     <ClCompile Include="enemy_top.cpp" />
     <ClCompile Include="game_object.cpp" />
+    <ClCompile Include="game_state.cpp" />
     <ClCompile Include="game_timer.cpp" />
     <ClCompile Include="keyboard.cpp" />
     <ClCompile Include="player.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="enemy_middle.h" />
     <ClInclude Include="enemy_top.h" />
     <ClInclude Include="game_object.h" />
+    <ClInclude Include="game_state.h" />
     <ClInclude Include="game_timer.h" />
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="player.h" />

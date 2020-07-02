@@ -11,6 +11,7 @@
 #include "game_object.h"
 #include "player.h"
 #include "console_screen.h"
+#include "game_state.h"
 #include "game_timer.h"
 #include "keyboard.h"
 
@@ -37,11 +38,7 @@ auto n_screen_width = 80;
 auto n_screen_height = 30;
 auto b_draw_stats = false;
 auto b_draw_stats_latch = false;
-auto n_lives = 3;
-auto n_score = 0;
 auto n_high_score = 0;
-auto b_lost = false;
-auto b_won = false;
 auto n_mode = e_mode::intro;
 
 vector<game_object*> objects;
@@ -87,8 +84,9 @@ const wchar_t* msg_fps = L"FPS: %4d";
 const wchar_t* msg_lives_3 = L"3 \u2569 \u2569 \u2569";
 const wchar_t* msg_lives_2 = L"2 \u2569 \u2569";
 const wchar_t* msg_lives_1 = L"1 \u2569";
-const wchar_t* msg_killed = L"Kills: %02d";
-const wchar_t* msg_speed = L"Speed: %04d";
+const wchar_t* msg_shots = L"Shots: %04d";
+const wchar_t* msg_killed = L"Kills: %04d";
+const wchar_t* msg_speed = L"Speed: %02.2f";
 const wchar_t* msg_object_count = L"Objects: %04d";
 
 // === GAME ===
@@ -265,11 +263,11 @@ void game_process_enemy_bullet(const float elapsed)
 		if (game_enemy_bullet_hit_player())
 		{
 			bullet.remove = true;
-			n_lives--;
-			if (n_lives == 0)
-			{
-				b_lost = true;
-			}
+			//n_lives--;
+			//if (n_lives == 0)
+			//{
+			//	b_lost = true;
+			//}
 		}
 
 		//if (game_enemy_bullet_hit_bunker())
@@ -314,9 +312,9 @@ void game_draw_ground(console_screen* screen)
 	}
 }
 
-const wchar_t* game_get_lives_message()
+const wchar_t* game_get_lives_message(game_state& state)
 {
-	switch (n_lives)
+	switch (state.lives)
 	{
 	case 3:
 		return msg_lives_3;
@@ -327,13 +325,13 @@ const wchar_t* game_get_lives_message()
 	}
 }
 
-void game_draw_hud(const int fps, keyboard* input, console_screen* screen)
+void game_draw_hud(game_state& state, keyboard* input, console_screen* screen)
 {
 	screen->draw_text_centered(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
 
 	wchar_t s[80];
 	screen->draw_text(1, 0, std::wcslen(msg_score) + 1, msg_score);
-	swprintf_s(s, 5, msg_score_fmt, n_score);
+	swprintf_s(s, 5, msg_score_fmt, state.score);
 	screen->draw_text(3, 1, std::wcslen(s) + 1, s);
 
 	screen->draw_text_centered(0, std::wcslen(msg_high_score) + 1, msg_high_score);
@@ -345,17 +343,19 @@ void game_draw_hud(const int fps, keyboard* input, console_screen* screen)
 		screen->draw_text(n_screen_width - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
 		swprintf_s(s, 80, msg_key_state, input->get_key(VK_LEFT).held, input->get_key(VK_RIGHT).held, input->get_key(VK_SPACE).held);
 		screen->draw_text(n_screen_width - 6, 1, 6, s);
-		swprintf_s(s, 80, msg_fps, fps);
+		swprintf_s(s, 80, msg_fps, state.fps);
 		screen->draw_text(n_screen_width - 10, 2, 10, s);
-		swprintf_s(s, 80, msg_killed, n_enemies_killed);
-		//screen->draw_text(n_screen_width - 10, 3, 10, s);
-		//swprintf_s(s, 80, msg_speed, f_enemy_speed);
+		swprintf_s(s, 80, msg_shots, state.player_shots);
+		screen->draw_text(n_screen_width - 12, 3, 12, s);
+		swprintf_s(s, 80, msg_killed, state.enemy_kill_count);
 		screen->draw_text(n_screen_width - 12, 4, 12, s);
+		swprintf_s(s, 80, msg_speed, state.enemy_speed_mod);
+		screen->draw_text(n_screen_width - 12, 5, 12, s);
 		swprintf_s(s, 80, msg_object_count, objects.size());
-		screen->draw_text(n_screen_width - 14, 5, 14, s);
+		screen->draw_text(n_screen_width - 14, 6, 14, s);
 	}
 
-	const auto* lives_msg = game_get_lives_message();
+	const auto* lives_msg = game_get_lives_message(state);
 	screen->draw_text(1, n_screen_height - 1, std::wcslen(lives_msg) + 1, lives_msg);
 }
 
@@ -374,7 +374,7 @@ void mode_intro_screen(const float elapsed, keyboard* input, console_screen* scr
 	}
 }
 
-void mode_game_play(const float elapsed, keyboard* input, console_screen* screen, const int fps)
+void mode_game_play(const float elapsed, keyboard* input, console_screen* screen, game_state& state)
 {
 	//game_process_enemies(elapsed);
 	//game_process_enemy_bullet(elapsed);
@@ -386,38 +386,38 @@ void mode_game_play(const float elapsed, keyboard* input, console_screen* screen
 
 	for (auto& o : objects)
 	{
-		o->collided_with(objects);
-		o->update(objects, input, elapsed);
+		o->collided_with(objects, state);
+		o->update(objects, input, elapsed, state);
 		o->draw(screen);
 	}
 
-	game_draw_hud(fps, input, screen);
+	game_draw_hud(state, input, screen);
 
-	if (b_lost)
+	if (state.lost)
 	{
 		n_mode = e_mode::lost;
 	}
 }
 
-void mode_win_screen(const float elapsed, keyboard* input, console_screen* screen)
+void mode_win_screen(const float elapsed, keyboard* input, console_screen* screen, game_state& state)
 {
 	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
 	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
 
 	wchar_t s[80];
-	swprintf_s(s, 80, msg_score_fmt, n_score);
+	swprintf_s(s, 80, msg_score_fmt, state.score);
 	screen->draw_text_centered((n_screen_height / 2) - 1, std::wcslen(s) + 1, s);
 	
 	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
 }
 
-void mode_loss_screen(const float elapsed, keyboard* input, console_screen* screen)
+void mode_loss_screen(const float elapsed, keyboard* input, console_screen* screen, game_state& state)
 {
 	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
 	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
 
 	wchar_t s[80];
-	swprintf_s(s, 80, msg_score_fmt, n_score);
+	swprintf_s(s, 80, msg_score_fmt, state.score);
 	screen->draw_text_centered((n_screen_height / 2) - 1, std::wcslen(s) + 1, s);
 
 	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
@@ -430,15 +430,19 @@ int main()
 		auto* const timer = new game_timer();
 		auto* const input = new keyboard();
 		auto* const screen = new console_screen(80, 30, msg_title);
+		game_state state;
 
 		auto b_quit_game = false;
 		auto b_init_game = false;
+		
 		while (!b_quit_game)
 		{
 			const auto f_elapsed = timer->get_elapsed();
 			input->sample();
 			screen->clear();
 
+			state.fps = timer->get_fps();
+			
 			if (input->get_key(VK_F1).released)
 			{
 				b_draw_stats = !b_draw_stats;
@@ -474,13 +478,17 @@ int main()
 					b_init_game = true;
 				}
 				
-				mode_game_play(f_elapsed, input, screen, timer->get_fps());
+				mode_game_play(f_elapsed, input, screen, state);
+				
+				if (state.won) n_mode = e_mode::win;
+				if (state.lost) n_mode = e_mode::lost;
+				
 				break;
 			case e_mode::win:
-				mode_win_screen(f_elapsed, input, screen);
+				mode_win_screen(f_elapsed, input, screen, state);
 				break;
 			default:
-				mode_loss_screen(f_elapsed, input, screen);
+				mode_loss_screen(f_elapsed, input, screen, state);
 				break;
 			}
 

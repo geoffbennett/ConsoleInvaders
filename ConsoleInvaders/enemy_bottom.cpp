@@ -1,12 +1,13 @@
 #include "enemy_bottom.h"
 #include "bullet.h"
+#include "game_state.h"
 
 void enemy_bottom::draw(console_screen* screen)
 {
 	screen->plot_char(x_, y_, cur_);
 }
 
-void enemy_bottom::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed)
+void enemy_bottom::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state)
 {
 	if (cur_ == f1_)
 	{
@@ -22,7 +23,7 @@ void enemy_bottom::update(std::vector<game_object*>& game_objects, keyboard* inp
 	}
 }
 
-void enemy_bottom::collided_with(std::vector<game_object*>& game_objects)
+void enemy_bottom::collided_with(std::vector<game_object*>& game_objects, game_state& state)
 {
 	for (auto* o : game_objects)
 	{
@@ -34,6 +35,8 @@ void enemy_bottom::collided_with(std::vector<game_object*>& game_objects)
 
 			if ((x_ == bullet_x) && (y_ == bullet_y))
 			{
+				state.score += 10;
+				state.enemy_kill_count++;
 				cur_ = dying_;
 				pb->set_deleted(true);
 			}

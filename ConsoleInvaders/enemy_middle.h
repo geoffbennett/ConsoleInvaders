@@ -20,6 +20,6 @@ public:
 	}
 
 	void draw(console_screen* screen) override;
-	void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed) override;
-	void collided_with(std::vector<game_object*>& game_objects) override;
+	void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state) override;
+	void collided_with(std::vector<game_object*>& game_objects, game_state& state) override;
 };

@@ -6,6 +6,7 @@
 #include "enemy_top.h"
 #include "game_object.h"
 #include "keyboard.h"
+#include "game_state.h"
 
 void enemy_manager::initialise_enemies()
 {
@@ -46,9 +47,9 @@ enemy_manager::enemy_manager(const int x, const int y) : game_object(x, y)
 	initialise_enemies();
 }
 
-void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* input, const float elapsed)
+void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* input, const float elapsed, game_state& state)
 {
-	f_delta_t_ += f_speed_ * elapsed;
+	f_delta_t_ += state.enemy_speed_mod * elapsed;
 	if (f_delta_t_ < 1.0f) return;
 
 	auto drop = false;
@@ -60,7 +61,7 @@ void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* in
 			drop = true;
 		}
 		enemy->set_x(new_x);
-		enemy->update(game_objects, input, elapsed);
+		enemy->update(game_objects, input, elapsed, state);
 	}
 	if (drop)
 	{
@@ -73,6 +74,35 @@ void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* in
 
 	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), [](game_object* g) { return g->get_deleted(); }), enemies_.end());
 
+	if (state.enemy_kill_count >= 10 && state.enemy_kill_count < 20)
+	{
+		state.enemy_speed_mod = 3.0;
+	}
+	if (state.enemy_kill_count >= 20 && state.enemy_kill_count < 30)
+	{
+		state.enemy_speed_mod = 4.0;
+	}
+	if (state.enemy_kill_count >= 30 && state.enemy_kill_count < 40)
+	{
+		state.enemy_speed_mod = 5.0;
+	}
+	if (state.enemy_kill_count >= 40 && state.enemy_kill_count < 50)
+	{
+		state.enemy_speed_mod = 6.0;
+	}
+	if (state.enemy_kill_count >= 50 && state.enemy_kill_count < 60)
+	{
+		state.enemy_speed_mod = 8.0;
+	}
+	if (enemies_.size() == 1)
+	{
+		state.enemy_speed_mod = 12.0;
+	}
+	if (enemies_.empty())
+	{
+		state.won = true;
+	}
+	
 	f_delta_t_ -= 1.0f;
 }
 
@@ -84,10 +114,10 @@ void enemy_manager::draw(console_screen* screen)
 	}
 }
 
-void enemy_manager::collided_with(std::vector<game_object*>& game_objects)
+void enemy_manager::collided_with(std::vector<game_object*>& game_objects, game_state& state)
 {
 	for(auto* e : enemies_)
 	{
-		e->collided_with(game_objects);
+		e->collided_with(game_objects, state);
 	}
 }
