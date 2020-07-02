@@ -1,4 +1,5 @@
 #include "bunker.h"
+#include "bullet.h"
 
 bunker::bunker(const int x, const int y) : game_object(x, y)
 {
@@ -43,5 +44,52 @@ void bunker::draw(console_screen* screen)
 
 void bunker::collided_with(std::vector<game_object*>& game_objects)
 {
-	// check if enemy or player bullets collided
+	for(auto* o : game_objects)
+	{
+		auto* pb = dynamic_cast<bullet*>(o);
+		auto* eb = dynamic_cast<bullet*>(o);
+		if (pb != nullptr || eb != nullptr)
+		{
+			const auto bullet_x = o->get_x();
+			const auto bullet_y = o->get_y();
+			for(auto x = 0; x < n_bunker_width_; x++)
+			{
+				for(auto y = 0; y < n_bunker_height_; y++)
+				{
+					if (shape_[y * n_bunker_width_ + x] != L'.')
+					{
+						if ((x_ + x == bullet_x) && (y_ + y == bullet_y))
+						{
+							auto b_hit = false;
+							switch (shape_[y * n_bunker_width_ + x])
+							{
+							case '4':
+								shape_[y * n_bunker_width_ + x] = '3';
+								b_hit = true;
+								break;
+							case '3':
+								shape_[y * n_bunker_width_ + x] = '2';
+								b_hit = true;
+								break;
+							case '2':
+								shape_[y * n_bunker_width_ + x] = '1';
+								b_hit = true;
+								break;
+							case '1':
+								shape_[y * n_bunker_width_ + x] = '0';
+								b_hit = true;
+								break;
+							default:
+								break;
+							}
+							if (b_hit)
+							{
+								o->set_deleted(true);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

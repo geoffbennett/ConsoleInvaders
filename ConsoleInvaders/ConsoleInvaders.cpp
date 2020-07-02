@@ -120,49 +120,6 @@ const wchar_t* msg_object_count = L"Objects: %04d";
 //	return false;
 //}
 
-//bool game_player_bullet_hit_bunker()
-//{
-//	for (auto& bunker : bunkers)
-//	{
-//		for (auto x = 0; x < n_bunker_width; x++)
-//		{
-//			for (auto y = 0; y < n_bunker_height; y++)
-//			{
-//				if (bunker.shape_[y * n_bunker_width + x] != L'.')
-//				{
-//					if ((bunker.x + x == n_bullet_x) && (bunker.y + y == n_bullet_y))
-//					{
-//						auto b_hit = false;
-//						switch (bunker.shape_[y * n_bunker_width + x])
-//						{
-//						case '4':
-//							bunker.shape_[y * n_bunker_width + x] = '3';
-//							b_hit = true;
-//							break;
-//						case '3':
-//							bunker.shape_[y * n_bunker_width + x] = '2';
-//							b_hit = true;
-//							break;
-//						case '2':
-//							bunker.shape_[y * n_bunker_width + x] = '1';
-//							b_hit = true;
-//							break;
-//						case '1':
-//							bunker.shape_[y * n_bunker_width + x] = '0';
-//							b_hit = true;
-//							break;
-//						default:
-//							break;
-//						}
-//						return b_hit;
-//					}
-//				}
-//			}
-//		}
-//	}
-//	return false;
-//}
-
 bool game_enemy_bullet_hit_player()
 {
 	//for (const auto bullet : enemy_bullets)
@@ -303,11 +260,6 @@ void game_process_bullet(const float elapsed, keyboard* input)
 		//	{
 		//		f_enemy_speed += f_enemy_speed_adjustment;
 		//	}
-		//	b_player_shooting = false;
-		//}
-
-		//if (game_player_bullet_hit_bunker())
-		//{
 		//	b_player_shooting = false;
 		//}
 	}

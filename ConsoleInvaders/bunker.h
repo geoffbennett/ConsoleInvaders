@@ -12,7 +12,7 @@ class bunker final : public game_object
 	const short n_025_pc_ = 0x2591;
 	const short n_000_pc_ = 0x0020;
 	
-	std::wstring shape_ = L" 444 44444444444   4";
+	std::wstring shape_ = L".444.44444444444...4";
 	int n_bunker_width_ = 5;
 	int n_bunker_height_ = 4;
 public:
