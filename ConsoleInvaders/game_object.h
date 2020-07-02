@@ -25,8 +25,8 @@ public:
 	bool get_deleted() const { return deleted_; }
 	void set_deleted(const bool d) { deleted_ = d; }
 	
-	virtual void update(std::vector<game_object*>* game_objects, keyboard* input, float elapsed) = 0;
+	virtual void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed) = 0;
 	virtual void draw(console_screen* screen) = 0;
-	virtual void collided_with(std::vector<game_object*>* game_objects) = 0;
+	virtual void collided_with(std::vector<game_object*>& game_objects) = 0;
 };
 

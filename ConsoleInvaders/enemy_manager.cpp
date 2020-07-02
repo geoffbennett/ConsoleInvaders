@@ -46,7 +46,7 @@ enemy_manager::enemy_manager(const int x, const int y) : game_object(x, y)
 	initialise_enemies();
 }
 
-void enemy_manager::update(std::vector<game_object*>* game_objects, keyboard* input, const float elapsed)
+void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* input, const float elapsed)
 {
 	f_delta_t_ += f_speed_ * elapsed;
 	if (f_delta_t_ < 1.0f) return;
@@ -81,7 +81,7 @@ void enemy_manager::draw(console_screen* screen)
 	}
 }
 
-void enemy_manager::collided_with(std::vector<game_object*>* game_objects)
+void enemy_manager::collided_with(std::vector<game_object*>& game_objects)
 {
 	// enemies collide with bunkers or the player
 }

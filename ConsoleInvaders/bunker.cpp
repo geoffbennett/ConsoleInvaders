@@ -4,7 +4,7 @@ bunker::bunker(const int x, const int y) : game_object(x, y)
 {
 }
 
-void bunker::update(std::vector<game_object*>* game_objects, keyboard* input, float elapsed)
+void bunker::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed)
 {
 }
 
@@ -41,7 +41,7 @@ void bunker::draw(console_screen* screen)
 	}
 }
 
-void bunker::collided_with(std::vector<game_object*>* game_objects)
+void bunker::collided_with(std::vector<game_object*>& game_objects)
 {
-	// bunkers don't collide with anything.
+	// check if enemy or player bullets collided
 }

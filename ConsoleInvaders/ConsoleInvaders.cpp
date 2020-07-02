@@ -102,6 +102,7 @@ const wchar_t* msg_lives_2 = L"2 \u2569 \u2569";
 const wchar_t* msg_lives_1 = L"1 \u2569";
 const wchar_t* msg_killed = L"Kills: %02d";
 const wchar_t* msg_speed = L"Speed: %04d";
+const wchar_t* msg_object_count = L"Objects: %04d";
 
 // === GAME ===
 
@@ -522,6 +523,8 @@ void game_draw_hud(const int fps, keyboard* input, console_screen* screen)
 		screen->draw_text(n_screen_width - 10, 3, 10, s);
 		swprintf_s(s, 80, msg_speed, f_enemy_speed);
 		screen->draw_text(n_screen_width - 12, 4, 12, s);
+		swprintf_s(s, 80, msg_object_count, objects.size());
+		screen->draw_text(n_screen_width - 14, 5, 14, s);
 	}
 
 	const auto* lives_msg = game_get_lives_message();
@@ -557,8 +560,8 @@ void mode_game_play(const float elapsed, keyboard* input, console_screen* screen
 
 	for (auto& o : objects)
 	{
-		o->collided_with(&objects);
-		o->update(&objects, input, elapsed);
+		o->collided_with(objects);
+		o->update(objects, input, elapsed);
 		o->draw(screen);
 	}
 
@@ -623,6 +626,7 @@ int main()
 			case e_mode::game:
 				if (!b_init_game)
 				{
+					objects.reserve(1000);
 					auto* p = new player(screen->get_width() / 2, screen->get_height() - 3);
 					objects.push_back(p);
 

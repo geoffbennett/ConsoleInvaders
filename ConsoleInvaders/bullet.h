@@ -2,11 +2,16 @@
 
 #include "game_object.h"
 
-class bullet : public game_object
+class bullet final : public game_object
 {
+	const float f_speed_ = 40.0f;
+	float f_delta_t_ = 0.0f;
+	
 public:
-	void update(std::vector<game_object*>* game_objects, keyboard* input, float elapsed) override;
+	bullet(const int x, const int y) : game_object(x, y) {}
+
+	void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed) override;
 	void draw(console_screen* screen) override;
-	void collided_with(std::vector<game_object*>* game_objects) override;
+	void collided_with(std::vector<game_object*>& game_objects) override;
 };
 
