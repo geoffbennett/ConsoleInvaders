@@ -15,8 +15,20 @@ void player::update(std::vector<game_object*>& game_objects, keyboard* input, co
 	if (input->get_key(VK_RIGHT).held && x_ < 79) x_++;
 	if (input->get_key(VK_SPACE).held)
 	{
- 		auto* b = new bullet(x_, y_ - 1);
-		game_objects.push_back(b);
+		auto shooting = false;
+		for(auto* o : game_objects)
+		{
+			auto* p_b = dynamic_cast<bullet*>(o);
+			if (p_b != nullptr)
+			{
+				shooting = true;
+			}
+		}
+		if (!shooting)
+		{
+			auto* b = new bullet(x_, y_ - 1);
+			game_objects.push_back(b);
+		}
 	}
 	f_delta_t_ -= 1.0f;
 }
