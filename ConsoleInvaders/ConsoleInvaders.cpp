@@ -47,11 +47,6 @@ auto n_mode = e_mode::intro;
 vector<game_object*> objects;
 
 // Player
-auto b_player_shooting = false;
-
-auto n_bullet_x = 0;
-auto n_bullet_y = 0;
-auto f_bullet_speed = 30.0f;
 
 const short n_chr_player = 0x2569;
 const short n_chr_player_explosion = 0x0023;
@@ -61,15 +56,7 @@ auto n_current_player_chr = n_chr_player;
 
 // Enemies
 vector<enemy_bullet> enemy_bullets;
-auto f_enemy_delta_t = 0.0f;
-auto f_enemy_speed = 500.0f;
-auto n_enemy_dir = 1;
 auto n_enemies_killed = 0;
-auto n_enemy_speed_increase_threshold = 10;
-auto f_enemy_speed_adjustment = 100.0f;
-auto b_enemy_shooting = false;
-auto n_enemy_shot_wait = 0;
-auto n_enemy_shot_reset = 5;
 
 auto n_enemy_bullet_speed_count = 0;
 auto n_enemy_bullet_speed_delta = 250;
@@ -222,16 +209,10 @@ void game_process_player(const float elapsed, keyboard* input)
 	//if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
 }
 
-void game_enemy_bullet_remove_dead()
-{
-	enemy_bullets.erase(std::remove_if(enemy_bullets.begin(), enemy_bullets.end(), [](enemy_bullet& b) { return b.remove; }), enemy_bullets.end());
-	b_enemy_shooting = false;
-}
-
 void game_enemy_shoot(float elapsed)
 {
-	n_enemy_shot_wait++;
-	const auto rand_val = rand() % 14;
+	//n_enemy_shot_wait++;
+	//const auto rand_val = rand() % 14;
 	//if ((rand_val == 11) && !b_enemy_shooting && (n_enemy_shot_wait > n_enemy_shot_reset))
 	//{
 	//	n_enemy_shot_wait = 0;
@@ -301,8 +282,6 @@ void game_process_enemy_bullet(const float elapsed)
 		//	bullet.remove = true;
 		//}
 	}
-
-	game_enemy_bullet_remove_dead();
 }
 
 //void game_process_enemies(const float elapsed)
@@ -369,8 +348,8 @@ void game_draw_hud(const int fps, keyboard* input, console_screen* screen)
 		swprintf_s(s, 80, msg_fps, fps);
 		screen->draw_text(n_screen_width - 10, 2, 10, s);
 		swprintf_s(s, 80, msg_killed, n_enemies_killed);
-		screen->draw_text(n_screen_width - 10, 3, 10, s);
-		swprintf_s(s, 80, msg_speed, f_enemy_speed);
+		//screen->draw_text(n_screen_width - 10, 3, 10, s);
+		//swprintf_s(s, 80, msg_speed, f_enemy_speed);
 		screen->draw_text(n_screen_width - 12, 4, 12, s);
 		swprintf_s(s, 80, msg_object_count, objects.size());
 		screen->draw_text(n_screen_width - 14, 5, 14, s);
