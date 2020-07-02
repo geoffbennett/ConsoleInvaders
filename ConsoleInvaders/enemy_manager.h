@@ -7,7 +7,7 @@
 class enemy_manager final : public game_object
 {
 private:
-	const float f_speed_ = 20.0f;
+	const float f_speed_ = 2.0f;
 	float f_delta_t_ = 0.0f;
 	int n_dir_ = 1;
 	

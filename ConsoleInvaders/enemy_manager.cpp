@@ -70,6 +70,9 @@ void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* in
 			enemy->set_y(enemy->get_y() + 1);
 		}
 	}
+
+	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), [](game_object* g) { return g->get_deleted(); }), enemies_.end());
+
 	f_delta_t_ -= 1.0f;
 }
 
@@ -83,5 +86,8 @@ void enemy_manager::draw(console_screen* screen)
 
 void enemy_manager::collided_with(std::vector<game_object*>& game_objects)
 {
-	// enemies collide with bunkers or the player
+	for(auto* e : enemies_)
+	{
+		e->collided_with(game_objects);
+	}
 }

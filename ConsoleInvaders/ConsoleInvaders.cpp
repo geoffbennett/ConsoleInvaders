@@ -106,20 +106,6 @@ const wchar_t* msg_object_count = L"Objects: %04d";
 
 // === GAME ===
 
-//bool game_player_bullet_hit_enemy()
-//{
-//	for (auto& enemy : enemies)
-//	{
-//		if ((enemy.x == n_bullet_x) && (enemy.y == n_bullet_y))
-//		{
-//			n_score += enemy.points;
-//			enemy.chr = n_chr_alien_explosion;
-//			return true;
-//		}
-//	}
-//	return false;
-//}
-
 bool game_enemy_bullet_hit_player()
 {
 	//for (const auto bullet : enemy_bullets)
@@ -236,35 +222,6 @@ void game_process_player(const float elapsed, keyboard* input)
 	//if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
 }
 
-void game_process_bullet(const float elapsed, keyboard* input)
-{
-	//if (!b_player_shooting && input->get_key(VK_SPACE).held)
-	//{
-	//	b_player_shooting = true;
-	//	n_bullet_x = f_player_pos;
-	//	n_bullet_y = f_player_row;
-	//}
-
-	if (b_player_shooting)
-	{
-		//n_bullet_y -= f_bullet_speed * elapsed;
-		//if (n_bullet_y <= 1)
-		//{
-		//	b_player_shooting = false;
-		//}
-
-		//if (game_player_bullet_hit_enemy())
-		//{
-		//	n_enemies_killed++;
-		//	if (n_enemies_killed % n_enemy_speed_increase_threshold == 0)
-		//	{
-		//		f_enemy_speed += f_enemy_speed_adjustment;
-		//	}
-		//	b_player_shooting = false;
-		//}
-	}
-}
-
 void game_enemy_bullet_remove_dead()
 {
 	enemy_bullets.erase(std::remove_if(enemy_bullets.begin(), enemy_bullets.end(), [](enemy_bullet& b) { return b.remove; }), enemy_bullets.end());
@@ -348,58 +305,8 @@ void game_process_enemy_bullet(const float elapsed)
 	game_enemy_bullet_remove_dead();
 }
 
-//void game_enemy_remove_dead()
-//{
-//	enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](enemy& e) { return e.remove; }), enemies.end());
-//	if (enemies.empty())
-//	{
-//		n_mode = e_mode::win;
-//	}
-//}
-
 //void game_process_enemies(const float elapsed)
 //{
-//	return;
-//	
-//	f_enemy_delta_t += elapsed;
-//	if (f_enemy_delta_t < f_enemy_speed)
-//	{		
-//		return;
-//	}
-//	
-//	auto b_hit_wall = false;
-//	auto b_action_pulse = false;
-//	for (auto& enemy : enemies)
-//	{
-//		const auto old_x = enemy.x;
-//		enemy.x += n_enemy_dir;
-//		b_action_pulse = old_x != enemy.x;
-//
-//		if (enemy.x >= n_screen_width)
-//		{
-//			b_hit_wall = true;
-//			enemy.x = n_screen_width;
-//		}
-//		else if (enemy.x <= 0)
-//		{
-//			b_hit_wall = true;
-//			enemy.x = 0;
-//		}
-//	}
-//
-//	if (b_hit_wall)
-//	{
-//		for (auto& enemy : enemies)
-//		{
-//			enemy.y++;
-//			//if (!b_lost)
-//			//{
-//			//	b_lost = (enemy.y >= f_player_row);
-//			//}
-//		}
-//
-//		n_enemy_dir *= -1;
-//	}
 //
 //	if (game_enemy_hit_bunker())
 //	{
@@ -408,19 +315,9 @@ void game_process_enemy_bullet(const float elapsed)
 //
 //	if (b_action_pulse)
 //	{
-//		game_enemy_update_sprites(elapsed);
-//		game_enemy_remove_dead();
 //		game_enemy_shoot(elapsed);
 //	}
 //}
-
-void game_draw_bullet(console_screen* screen)
-{
-	if (b_player_shooting)
-	{
-		screen->plot_char(n_bullet_x, n_bullet_y, n_chr_player_bullet);
-	}
-}
 
 void game_draw_enemy_bullets(console_screen* screen)
 {
@@ -500,11 +397,9 @@ void mode_intro_screen(const float elapsed, keyboard* input, console_screen* scr
 
 void mode_game_play(const float elapsed, keyboard* input, console_screen* screen, const int fps)
 {
-	//game_process_bullet(elapsed, input);
 	//game_process_enemies(elapsed);
 	//game_process_enemy_bullet(elapsed);
 
-	//game_draw_bullet(screen);
 	//game_draw_enemy_bullets(screen);
 	game_draw_ground(screen);
 

@@ -11,6 +11,7 @@ private:
 	wchar_t frames_[2] = { L'M', L'W' };
 	wchar_t f1_ = L'M';
 	wchar_t f2_ = L'W';
+	wchar_t dying_ = L'*';
 	wchar_t cur_ = f1_;
 
 public:

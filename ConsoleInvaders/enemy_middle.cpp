@@ -1,4 +1,5 @@
 #include "enemy_middle.h"
+#include "bullet.h"
 
 void enemy_middle::draw(console_screen* screen)
 {
@@ -11,13 +12,33 @@ void enemy_middle::update(std::vector<game_object*>& game_objects, keyboard* inp
 	{
 		cur_ = f2_;
 	}
-	else
+	else if (cur_ == f2_)
 	{
 		cur_ = f1_;
+	}
+	else
+	{
+		set_deleted(true);
 	}
 }
 
 void enemy_middle::collided_with(std::vector<game_object*>& game_objects)
 {
-	// enemies collide with bunkers or the player
+	for (auto* o : game_objects)
+	{
+		auto* pb = dynamic_cast<bullet*>(o);
+		if (pb != nullptr)
+		{
+			const auto bullet_x = o->get_x();
+			const auto bullet_y = o->get_y();
+
+			if ((x_ == bullet_x) && (y_ == bullet_y))
+			{
+				cur_ = dying_;
+				pb->set_deleted(true);
+			}
+
+			return;
+		}
+	}
 }
