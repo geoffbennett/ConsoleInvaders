@@ -1,24 +1,18 @@
 #pragma once
 
-#include <vector>
-
 #include "game_object.h"
-#include "player.h"
 
-class enemy_manager final : public game_object
+class enemy_bullet final : public game_object
 {
-private:
+	const float f_speed_ = 10.0f;
 	float f_delta_t_ = 0.0f;
-	int n_dir_ = 1;
-	
-	std::vector<game_object*> enemies_;
 
-	void initialise_enemies();
-	
+	wchar_t f1_ = L'{';
+	wchar_t f2_ = L'}';
+	wchar_t cur_ = f1_;
+
 public:
-	enemy_manager(int x, int y);
-	
-	void update_speed_mod(game_state& state) const;
+	enemy_bullet(const int x, const int y) : game_object(x, y) {}
 
 	void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state) override;
 	void draw(console_screen* screen) override;

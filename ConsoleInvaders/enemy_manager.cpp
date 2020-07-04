@@ -2,11 +2,13 @@
 
 #include "console_screen.h"
 #include "enemy_bottom.h"
+#include "enemy_bullet.h"
 #include "enemy_middle.h"
 #include "enemy_top.h"
 #include "game_object.h"
 #include "keyboard.h"
 #include "game_state.h"
+#include "player.h"
 
 void enemy_manager::initialise_enemies()
 {
@@ -47,33 +49,8 @@ enemy_manager::enemy_manager(const int x, const int y) : game_object(x, y)
 	initialise_enemies();
 }
 
-void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* input, const float elapsed, game_state& state)
+void enemy_manager::update_speed_mod(game_state& state) const
 {
-	f_delta_t_ += state.enemy_speed_mod * elapsed;
-	if (f_delta_t_ < 1.0f) return;
-
-	auto drop = false;
-	for(auto* enemy : enemies_)
-	{
-		const auto new_x = enemy->get_x() + n_dir_;
-		if ((new_x == 79) || (new_x == 0))
-		{
-			drop = true;
-		}
-		enemy->set_x(new_x);
-		enemy->update(game_objects, input, elapsed, state);
-	}
-	if (drop)
-	{
-		n_dir_ *= -1;
-		for (auto* enemy : enemies_)
-		{
-			enemy->set_y(enemy->get_y() + 1);
-		}
-	}
-
-	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), [](game_object* g) { return g->get_deleted(); }), enemies_.end());
-
 	if (state.enemy_kill_count >= 10 && state.enemy_kill_count < 20)
 	{
 		state.enemy_speed_mod = 3.0;
@@ -98,6 +75,76 @@ void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* in
 	{
 		state.enemy_speed_mod = 12.0;
 	}
+}
+
+void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* input, const float elapsed, game_state& state)
+{
+	f_delta_t_ += state.enemy_speed_mod * elapsed;
+	if (f_delta_t_ < 1.0f) return;
+
+	player* p = nullptr;
+	for (auto* o : game_objects)
+	{
+		p = dynamic_cast<player*>(o);
+		if (p != nullptr) break;
+	}
+	auto enemy_y = p != nullptr ? p->get_y() : 0;
+	game_object* shooting_enemy = nullptr;
+
+	auto drop = false;
+	for(auto* enemy : enemies_)
+	{
+		const auto new_x = enemy->get_x() + n_dir_;
+		if ((new_x == 79) || (new_x == 0))
+		{
+			drop = true;
+		}
+		enemy->set_x(new_x);
+		enemy->update(game_objects, input, elapsed, state);
+
+		if (p == nullptr) continue;
+		
+		if ((enemy->get_x() > p->get_x() - 5) && (enemy->get_x() < p->get_x() + 5))
+		{
+			const auto y_test = p->get_y() - enemy->get_y();
+			if (y_test < enemy_y)
+			{
+				enemy_y = y_test;
+				shooting_enemy = enemy;
+			}
+		}
+	}
+
+	if (shooting_enemy != nullptr)
+	{
+		const auto probability = static_cast<double>(rand()) / RAND_MAX;
+		if (probability < 0.5)
+		{
+			if (p != nullptr)
+			{
+				if ((shooting_enemy->get_x() > p->get_x() - 5) && (shooting_enemy->get_x() < p->get_x() + 5))
+				{
+					auto* eb = new enemy_bullet(shooting_enemy->get_x(), shooting_enemy->get_y() + 1);
+					game_objects.push_back(eb);
+				}
+			}
+		}
+		shooting_enemy = nullptr;
+	}
+	
+	if (drop)
+	{
+		n_dir_ *= -1;
+		for (auto* enemy : enemies_)
+		{
+			enemy->set_y(enemy->get_y() + 1);
+		}
+	}
+
+	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), [](game_object* g) { return g->get_deleted(); }), enemies_.end());
+
+	update_speed_mod(state);
+	
 	if (enemies_.empty())
 	{
 		state.won = true;

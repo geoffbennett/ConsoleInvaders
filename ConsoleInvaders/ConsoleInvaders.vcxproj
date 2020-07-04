@@ -143,6 +143,7 @@
     <ClCompile Include="ConsoleInvaders.cpp" />
     <ClCompile Include="console_screen.cpp" />
     <ClCompile Include="enemy_bottom.cpp" />
+    <ClCompile Include="enemy_bullet.cpp" />
     <ClCompile Include="enemy_manager.cpp" />
     <ClCompile Include="enemy_middle.cpp" />
     <ClCompile Include="enemy_top.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="bunker.h" />
     <ClInclude Include="console_screen.h" />
     <ClInclude Include="enemy_bottom.h" />
+    <ClInclude Include="enemy_bullet.h" />
     <ClInclude Include="enemy_manager.h" />
     <ClInclude Include="enemy_middle.h" />
     <ClInclude Include="enemy_top.h" />
