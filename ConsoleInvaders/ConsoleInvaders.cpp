@@ -30,7 +30,6 @@ auto n_screen_width = 80;
 auto n_screen_height = 30;
 auto b_draw_stats = false;
 auto b_draw_stats_latch = false;
-auto n_high_score = 0;
 auto n_mode = e_mode::intro;
 vector<game_object*> objects;
 auto n_title_colour = 0;
@@ -97,7 +96,7 @@ void game_draw_hud(game_state& state, keyboard* input, console_screen* screen)
 	screen->draw_text(3, 1, s, fg_white);
 
 	screen->draw_text_centered(0, msg_high_score, fg_white);
-	swprintf_s(s, 5, msg_score_fmt, n_high_score);
+	swprintf_s(s, 5, msg_score_fmt, state.high_score);
 	screen->draw_text_centered(1, s, fg_white);
 
 	if (b_draw_stats)
@@ -291,6 +290,10 @@ int main()
 				break;
 			case e_mode::win:
 				mode_win_screen(f_elapsed, input, screen, state);
+				if (state.score > state.high_score)
+				{
+					state.high_score = state.score;
+				}
 				if(input->get_key(VK_ESCAPE).pressed)
 				{
 					n_mode = e_mode::intro;
@@ -298,6 +301,10 @@ int main()
 				break;
 			default:
 				mode_loss_screen(f_elapsed, input, screen, state);
+				if (state.score > state.high_score)
+				{
+					state.high_score = state.score;
+				}
 				if (input->get_key(VK_ESCAPE).pressed)
 				{
 					n_mode = e_mode::intro;

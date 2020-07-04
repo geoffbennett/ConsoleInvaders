@@ -6,6 +6,7 @@ struct game_state
 	bool won = false;
 	int lives = 3;
 	int score = 0;
+	int high_score = 0;
 	int fps = 0;
 	int player_shots = 0;
 	int enemy_kill_count = 0;

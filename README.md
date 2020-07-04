@@ -10,7 +10,7 @@ You need to ensure your console is set to 80 x 30 characters, or things will loo
 - [x] There's code that could be refactored to DRY it up a little
 - [x] Colour!!
 - [ ] Sound effects
-- [ ] Get the high-score working
+- [x] Get the high-score working
 - [ ] Get player 2 working
 - [ ] Add the mothership
 - [ ] Add levels with increasing difficulty instead of just "winning"
