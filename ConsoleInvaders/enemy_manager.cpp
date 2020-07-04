@@ -21,24 +21,24 @@ void enemy_manager::initialise_enemies()
 			switch (r)
 			{
 			case 0:
-				{
-					auto* et = new enemy_top(start_x + c * 4, start_y + r * 2);
-					enemies_.push_back(et);
-					break;
-				}
+			{
+				auto* et = new enemy_top(start_x + c * 4, start_y + r * 2);
+				enemies_.push_back(et);
+				break;
+			}
 			case 1:
 			case 2:
-				{
-					auto* em = new enemy_middle(start_x + c * 4, start_y + r * 2);
-					enemies_.push_back(em);
-					break;
-				}
+			{
+				auto* em = new enemy_middle(start_x + c * 4, start_y + r * 2);
+				enemies_.push_back(em);
+				break;
+			}
 			default:
-				{
-					auto* eb = new enemy_bottom(start_x + c * 4, start_y + r * 2);
-					enemies_.push_back(eb);
-					break;
-				}
+			{
+				auto* eb = new enemy_bottom(start_x + c * 4, start_y + r * 2);
+				enemies_.push_back(eb);
+				break;
+			}
 			}
 		}
 	}
@@ -88,50 +88,61 @@ void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* in
 		p = dynamic_cast<player*>(o);
 		if (p != nullptr) break;
 	}
+
+	auto enemy_x = 0;
 	auto enemy_y = p != nullptr ? p->get_y() : 0;
 	game_object* shooting_enemy = nullptr;
 
 	auto drop = false;
-	for(auto* enemy : enemies_)
+	for (auto* enemy : enemies_)
 	{
 		const auto new_x = enemy->get_x() + n_dir_;
 		if ((new_x == 79) || (new_x == 0))
 		{
 			drop = true;
 		}
+
 		enemy->set_x(new_x);
 		enemy->update(game_objects, input, elapsed, state);
 
-		if (p == nullptr) continue;
-		
-		if ((enemy->get_x() > p->get_x() - 5) && (enemy->get_x() < p->get_x() + 5))
+		if (p != nullptr)
 		{
-			const auto y_test = p->get_y() - enemy->get_y();
-			if (y_test < enemy_y)
+			if ((enemy->get_x() > p->get_x() - 1) && (enemy->get_x() < p->get_x() + 1))
 			{
-				enemy_y = y_test;
-				shooting_enemy = enemy;
+				const auto y_test = p->get_y() - enemy->get_y();
+				if (y_test < enemy_y)
+				{
+					enemy_x = enemy->get_x();
+					enemy_y = y_test;
+					shooting_enemy = enemy;
+				}
 			}
 		}
 	}
 
 	if (shooting_enemy != nullptr)
 	{
-		const auto probability = static_cast<double>(rand()) / RAND_MAX;
-		if (probability < 0.5)
+		if (p != nullptr)
 		{
-			if (p != nullptr)
+			const auto probability = static_cast<double>(rand()) / RAND_MAX;
+			auto comparison_probability = 0.5;
+			if (shooting_enemy->get_x() == p->get_x())
 			{
-				if ((shooting_enemy->get_x() > p->get_x() - 5) && (shooting_enemy->get_x() < p->get_x() + 5))
+				comparison_probability = 1.0;
+			}
+			
+			if (probability <= comparison_probability)
+			{
+				if ((enemy_x > p->get_x() - 5) && (enemy_x < p->get_x() + 5))
 				{
-					auto* eb = new enemy_bullet(shooting_enemy->get_x(), shooting_enemy->get_y() + 1);
+					auto* eb = new enemy_bullet(enemy_x, enemy_y + 1);
 					game_objects.push_back(eb);
 				}
 			}
 		}
 		shooting_enemy = nullptr;
 	}
-	
+
 	if (drop)
 	{
 		n_dir_ *= -1;
@@ -144,12 +155,12 @@ void enemy_manager::update(std::vector<game_object*>& game_objects, keyboard* in
 	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), [](game_object* g) { return g->get_deleted(); }), enemies_.end());
 
 	update_speed_mod(state);
-	
+
 	if (enemies_.empty())
 	{
 		state.won = true;
 	}
-	
+
 	f_delta_t_ -= 1.0f;
 }
 
@@ -163,7 +174,7 @@ void enemy_manager::draw(console_screen* screen)
 
 void enemy_manager::collided_with(std::vector<game_object*>& game_objects, game_state& state)
 {
-	for(auto* e : enemies_)
+	for (auto* e : enemies_)
 	{
 		e->collided_with(game_objects, state);
 	}
