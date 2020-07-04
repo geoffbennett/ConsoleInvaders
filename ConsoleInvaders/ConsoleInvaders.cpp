@@ -25,14 +25,6 @@ enum class e_mode
 	lost = 3
 };
 
-struct enemy_bullet
-{
-	int x = 0;
-	int y = 0;
-	wchar_t chr = 0;
-	bool remove = false;
-};
-
 // Global game state
 auto n_screen_width = 80;
 auto n_screen_height = 30;
@@ -40,15 +32,7 @@ auto b_draw_stats = false;
 auto b_draw_stats_latch = false;
 auto n_high_score = 0;
 auto n_mode = e_mode::intro;
-
 vector<game_object*> objects;
-
-// Player
-
-const short n_chr_player = 0x2569;
-const short n_chr_player_explosion = 0x0023;
-
-auto n_current_player_chr = n_chr_player;
 
 // Bunkers
 const auto n_bunker_y = n_screen_height - 8;
@@ -79,19 +63,6 @@ const wchar_t* msg_speed = L"Speed: %5.02f";
 const wchar_t* msg_object_count = L"Objects:  % 4d";
 
 // === GAME ===
-
-bool game_enemy_bullet_hit_player()
-{
-	//for (const auto bullet : enemy_bullets)
-	//{
-	//	if (pos_cmp(bullet.x, f_player_pos) && pos_cmp(bullet.y, f_player_row))
-	//	{
-	//		n_current_player_chr = n_chr_player_explosion;
-	//		return true;
-	//	}
-	//}
-	return false;
-}
 
 //bool game_enemy_hit_bunker()
 //{
@@ -138,17 +109,6 @@ bool game_enemy_bullet_hit_player()
 //	}
 //	return false;
 //}
-
-void game_process_player(const float elapsed, keyboard* input)
-{
-	if (n_current_player_chr == n_chr_player_explosion)
-	{
-		n_current_player_chr = n_chr_player;
-	}
-
-	//if (input->get_key(VK_LEFT).held) f_player_pos -= f_player_speed * elapsed;
-	//if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
-}
 
 void game_draw_ground(console_screen* screen)
 {
