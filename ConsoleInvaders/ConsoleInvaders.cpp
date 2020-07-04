@@ -62,7 +62,6 @@ const wchar_t* msg_lives_1 = L"1 \u2569";
 const wchar_t* msg_shots = L"Shots:  % 4d";
 const wchar_t* msg_killed = L"Kills:  % 4d";
 const wchar_t* msg_speed = L"Speed: %5.02f";
-const wchar_t* msg_object_count = L"Objects:  % 4d";
 
 // === GAME ===
 
@@ -92,11 +91,11 @@ void game_draw_hud(game_state& state, keyboard* input, console_screen* screen)
 	screen->draw_text_centered(n_screen_height - 1, msg_restart, fg_dark_grey);
 
 	wchar_t s[80];
-	screen->draw_text(1, 0, msg_score, fg_white);
+	screen->draw_text(1, 0, msg_score, fg_dark_grey);
 	swprintf_s(s, 5, msg_score_fmt, state.score);
 	screen->draw_text(3, 1, s, fg_white);
 
-	screen->draw_text_centered(0, msg_high_score, fg_white);
+	screen->draw_text_centered(0, msg_high_score, fg_dark_grey);
 	swprintf_s(s, 5, msg_score_fmt, state.high_score);
 	screen->draw_text_centered(1, s, fg_white);
 
@@ -104,17 +103,27 @@ void game_draw_hud(game_state& state, keyboard* input, console_screen* screen)
 	{
 		screen->draw_text(n_screen_width - 6, 0, msg_key_title, fg_dark_grey);
 		swprintf_s(s, 80, msg_key_state, input->get_key(VK_LEFT).held, input->get_key(VK_RIGHT).held, input->get_key(VK_SPACE).held);
-		screen->draw_text(n_screen_width - 6, 1, s, fg_dark_grey);
-		swprintf_s(s, 80, msg_fps, state.fps);
-		screen->draw_text(n_screen_width - 11, 2, s, fg_dark_grey);
-		swprintf_s(s, 80, msg_shots, state.player_shots);
-		screen->draw_text(n_screen_width - 13, 3, s, fg_dark_grey);
-		swprintf_s(s, 80, msg_killed, state.enemy_kill_count);
-		screen->draw_text(n_screen_width - 13, 4, s, fg_dark_grey);
-		swprintf_s(s, 80, msg_speed, state.enemy_speed_mod);
-		screen->draw_text(n_screen_width - 13, 5, s, fg_dark_grey);
-		swprintf_s(s, 80, msg_object_count, objects.size());
-		screen->draw_text(n_screen_width - 15, 6, s, fg_dark_grey);
+		screen->draw_text(n_screen_width - 6, 1, s, fg_white);
+		
+		screen->draw_text(n_screen_width - 11, 2, L"FPS:", fg_dark_grey);
+		swprintf_s(s, 80, L"%4d", state.fps);
+		screen->draw_text(n_screen_width - 5, 2, s, fg_white);
+		
+		screen->draw_text(n_screen_width - 13, 3, L"Shots:", fg_dark_grey);
+		swprintf_s(s, 80, L"%2d", state.player_shots);
+		screen->draw_text(n_screen_width - 3, 3, s, fg_white);
+		
+		screen->draw_text(n_screen_width - 13, 4, L"Kills:", fg_dark_grey);
+		swprintf_s(s, 80, L"%2d", state.enemy_kill_count);
+		screen->draw_text(n_screen_width - 3, 4, s, fg_white);
+		
+		screen->draw_text(n_screen_width - 13, 5, L"Speed", fg_dark_grey);
+		swprintf_s(s, 80, L"%5.02f", state.enemy_speed_mod);
+		screen->draw_text(n_screen_width - 6, 5, s, fg_white);
+
+		screen->draw_text(n_screen_width - 15, 6, L"Objects:", fg_dark_grey);
+		swprintf_s(s, 80, L"%04d", objects.size());
+		screen->draw_text(n_screen_width - 5, 6, s, fg_white);
 	}
 
 	const auto* lives_msg = game_get_lives_message(state);
