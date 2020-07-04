@@ -47,6 +47,7 @@ const wchar_t* msg_title = L"C O N S O L E  I N V A D E R S";
 const wchar_t* msg_why = L"Why? Because. That's why.";
 const wchar_t* msg_start = L"Press ENTER to start";
 const wchar_t* msg_quit = L"Press ESC to quit";
+const wchar_t* msg_restart = L"Press ESC to restart";
 const wchar_t* msg_won = L"You saved the planet!";
 const wchar_t* msg_lost = L"Everybody died because of you!";
 const wchar_t* msg_high_score = L"HI-SCORE";
@@ -88,7 +89,7 @@ const wchar_t* game_get_lives_message(game_state& state)
 
 void game_draw_hud(game_state& state, keyboard* input, console_screen* screen)
 {
-	screen->draw_text_centered(n_screen_height - 1, msg_quit, fg_dark_grey);
+	screen->draw_text_centered(n_screen_height - 1, msg_restart, fg_dark_grey);
 
 	wchar_t s[80];
 	screen->draw_text(1, 0, msg_score, fg_white);
@@ -195,7 +196,7 @@ void mode_win_screen(const float elapsed, keyboard* input, console_screen* scree
 	swprintf_s(s, 80, msg_score_fmt, state.score);
 	screen->draw_text_centered((n_screen_height / 2) - 1, s, fg_white);
 	
-	screen->draw_text_centered((n_screen_height - 1), msg_quit, fg_dark_grey);
+	screen->draw_text_centered((n_screen_height - 1), msg_restart, fg_dark_grey);
 }
 
 void mode_loss_screen(const float elapsed, keyboard* input, console_screen* screen, game_state& state)
@@ -207,7 +208,7 @@ void mode_loss_screen(const float elapsed, keyboard* input, console_screen* scre
 	swprintf_s(s, 80, msg_score_fmt, state.score);
 	screen->draw_text_centered((n_screen_height / 2) - 1, s, fg_red);
 
-	screen->draw_text_centered((n_screen_height - 1), msg_quit, fg_dark_grey);
+	screen->draw_text_centered((n_screen_height - 1), msg_restart, fg_dark_grey);
 }
 
 int main()
@@ -240,7 +241,17 @@ int main()
 			switch (n_mode)
 			{
 			case e_mode::intro:
+				state.won = false;
+				state.lost = false;
+				state.lives = 3;
+				state.enemy_kill_count = 0;
+				state.player_shots = 0;
+				state.score = 0;
+				state.enemy_speed_mod = 2.0f;
+				objects.clear();
+				b_init_game = false;
 				mode_intro_screen(f_elapsed, input, screen);
+				b_quit_game = input->get_key(VK_ESCAPE).pressed;
 				break;
 			case e_mode::game:
 				if (!b_init_game)
@@ -271,30 +282,34 @@ int main()
 				
 				if (state.won) n_mode = e_mode::win;
 				if (state.lost) n_mode = e_mode::lost;
-				
+
+				if (input->get_key(VK_ESCAPE).pressed)
+				{
+					n_mode = e_mode::intro;
+				}
+
 				break;
 			case e_mode::win:
 				mode_win_screen(f_elapsed, input, screen, state);
+				if(input->get_key(VK_ESCAPE).pressed)
+				{
+					n_mode = e_mode::intro;
+				}
 				break;
 			default:
 				mode_loss_screen(f_elapsed, input, screen, state);
+				if (input->get_key(VK_ESCAPE).pressed)
+				{
+					n_mode = e_mode::intro;
+				}
 				break;
 			}
-
 			screen->present();
-
 			timer->frame();
-
-			b_quit_game = input->get_key(VK_ESCAPE).pressed;
 		}
 
 		screen->clear();
 		screen->present();
-
-		for(auto& go : objects)
-		{
-			delete go;
-		}
 
 		// ERROR: Why does this cause a heap corruption?
 		// delete input;

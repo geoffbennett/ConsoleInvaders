@@ -18,5 +18,5 @@ You need to ensure your console is set to 80 x 30 characters, or things will loo
 - [x] Switch to floating point with elapsed time
 - [ ] Handle player life loss a bit nicer
 - [ ] Setup a proper start menu
-- [ ] Return to the start menu after death
+- [x] Return to the start menu after death
 - [x] Set a window title instead of the default
