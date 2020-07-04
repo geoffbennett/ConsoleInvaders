@@ -6,6 +6,24 @@ bunker::bunker(const int x, const int y) : game_object(x, y)
 {
 }
 
+bool bunker::is_hit(const int x, const int y)
+{
+	for (auto i_x = 0; i_x < n_bunker_width_; i_x++)
+	{
+		for (auto i_y = 0; i_y < n_bunker_height_; i_y++)
+		{
+			if (shape_[i_y * n_bunker_width_ + i_x] != L'.')
+			{
+				if ((x_ + i_x == x) && (y_ + i_y == y))
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
 void bunker::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state)
 {
 }
@@ -77,7 +95,7 @@ void bunker::collided_with(std::vector<game_object*>& game_objects, game_state& 
 								b_hit = true;
 								break;
 							case '1':
-								shape_[y * n_bunker_width_ + x] = '0';
+								shape_[y * n_bunker_width_ + x] = '.';
 								b_hit = true;
 								break;
 							default:

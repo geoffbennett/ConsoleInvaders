@@ -1,5 +1,5 @@
 #include "enemy_manager.h"
-
+#include "bunker.h"
 #include "console_screen.h"
 #include "enemy_bottom.h"
 #include "enemy_bullet.h"
@@ -177,5 +177,19 @@ void enemy_manager::collided_with(std::vector<game_object*>& game_objects, game_
 	for (auto* e : enemies_)
 	{
 		e->collided_with(game_objects, state);
+	}
+	for(auto* o : game_objects)
+	{
+		auto* b = dynamic_cast<bunker*>(o);
+		if (b != nullptr)
+		{
+			for (auto* e : enemies_)
+			{
+				if (b->is_hit(e->get_x(), e->get_y()))
+				{
+					state.lost = true;
+				}
+			}
+		}
 	}
 }

@@ -18,6 +18,8 @@ class bunker final : public game_object
 public:
 	bunker(int x, int y);
 
+	bool is_hit(int x, int y);
+	
 	void update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state) override;
 	void draw(console_screen* screen) override;
 	void collided_with(std::vector<game_object*>& game_objects, game_state& state) override;
