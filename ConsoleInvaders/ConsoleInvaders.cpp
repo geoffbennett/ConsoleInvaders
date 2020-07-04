@@ -50,16 +50,6 @@ const short n_chr_player_explosion = 0x0023;
 
 auto n_current_player_chr = n_chr_player;
 
-// Enemies
-vector<enemy_bullet> enemy_bullets;
-auto n_enemies_killed = 0;
-
-auto n_enemy_bullet_speed_count = 0;
-auto n_enemy_bullet_speed_delta = 250;
-
-const short n_chr_alien_bullet_a = 0x007b;
-const short n_chr_alien_bullet_b = 0x007d;
-
 // Bunkers
 const auto n_bunker_y = n_screen_height - 8;
 const auto n_bunker_1_x = 15;
@@ -102,52 +92,6 @@ bool game_enemy_bullet_hit_player()
 	//}
 	return false;
 }
-
-//bool game_enemy_bullet_hit_bunker()
-//{
-//	for (auto& bunker : bunkers)
-//	{
-//		for (auto x = 0; x < n_bunker_width; x++)
-//		{
-//			for (auto y = 0; y < n_bunker_height; y++)
-//			{
-//				if (bunker.shape_[y * n_bunker_width + x] != L'.')
-//				{
-//					for (auto& bullet : enemy_bullets)
-//					{
-//						if ((bunker.x + x == bullet.x) && (bunker.y + y == bullet.y))
-//						{
-//							auto b_hit = false;
-//							switch (bunker.shape_[y * n_bunker_width + x])
-//							{
-//							case '4':
-//								bunker.shape_[y * n_bunker_width + x] = '3';
-//								b_hit = true;
-//								break;
-//							case '3':
-//								bunker.shape_[y * n_bunker_width + x] = '2';
-//								b_hit = true;
-//								break;
-//							case '2':
-//								bunker.shape_[y * n_bunker_width + x] = '1';
-//								b_hit = true;
-//								break;
-//							case '1':
-//								bunker.shape_[y * n_bunker_width + x] = '0';
-//								b_hit = true;
-//								break;
-//							default:
-//								break;
-//							}
-//							return b_hit;
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
-//	return false;
-//}
 
 //bool game_enemy_hit_bunker()
 //{
@@ -204,46 +148,6 @@ void game_process_player(const float elapsed, keyboard* input)
 
 	//if (input->get_key(VK_LEFT).held) f_player_pos -= f_player_speed * elapsed;
 	//if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
-}
-
-void game_process_enemy_bullet(const float elapsed)
-{
-	n_enemy_bullet_speed_count++;
-	if (n_enemy_bullet_speed_count <= n_enemy_bullet_speed_delta) return;
-	n_enemy_bullet_speed_count = 0;
-
-	for (auto& bullet : enemy_bullets)
-	{
-		bullet.y++;
-		if (bullet.chr == n_chr_alien_bullet_a)
-		{
-			bullet.chr = n_chr_alien_bullet_b;
-		}
-		else if (bullet.chr == n_chr_alien_bullet_b)
-		{
-			bullet.chr = n_chr_alien_bullet_a;
-		}
-
-		if (game_enemy_bullet_hit_player())
-		{
-			bullet.remove = true;
-			//n_lives--;
-			//if (n_lives == 0)
-			//{
-			//	b_lost = true;
-			//}
-		}
-
-		//if (game_enemy_bullet_hit_bunker())
-		//{
-		//	bullet.remove = true;
-		//}
-
-		//if (pos_cmp(bullet.y, f_player_row))
-		//{
-		//	bullet.remove = true;
-		//}
-	}
 }
 
 void game_draw_ground(console_screen* screen)

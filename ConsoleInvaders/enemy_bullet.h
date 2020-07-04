@@ -4,6 +4,9 @@
 
 class enemy_bullet final : public game_object
 {
+	const short n_chr_alien_bullet_a = 0x007b;
+	const short n_chr_alien_bullet_b = 0x007d;
+	
 	const float f_speed_ = 10.0f;
 	float f_delta_t_ = 0.0f;
 
