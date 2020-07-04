@@ -55,7 +55,7 @@ void bunker::draw(console_screen* screen)
 					n_bunker_chr = n_000_pc_;
 					break;
 				}
-				screen->plot_char(x_ + x, y_ + y, n_bunker_chr);
+				screen->draw(x_ + x, y_ + y, n_bunker_chr, fg_green);
 			}
 		}
 	}

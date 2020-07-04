@@ -13,7 +13,7 @@ void bullet::update(std::vector<game_object*>& game_objects, keyboard* input, co
 
 void bullet::draw(console_screen* screen)
 {
-	screen->plot_char(x_, y_, L'.');
+	screen->draw(x_, y_, L'.', fg_cyan);
 }
 
 void bullet::collided_with(std::vector<game_object*>& game_objects, game_state& state)

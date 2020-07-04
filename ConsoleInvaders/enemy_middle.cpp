@@ -4,7 +4,7 @@
 
 void enemy_middle::draw(console_screen* screen)
 {
-	screen->plot_char(x_, y_, cur_);
+	screen->draw(x_, y_, cur_, fg_blue);
 }
 
 void enemy_middle::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state)

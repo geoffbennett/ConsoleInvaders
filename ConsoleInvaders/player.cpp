@@ -43,7 +43,7 @@ void player::update(std::vector<game_object*>& game_objects, keyboard* input, co
 
 void player::draw(console_screen* screen)
 {
-	screen->plot_char(x_, y_, n_current_player_chr_);
+	screen->draw(x_, y_, n_current_player_chr_, fg_green);
 }
 
 void player::collided_with(std::vector<game_object*>& game_objects, game_state& state)

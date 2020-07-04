@@ -8,7 +8,7 @@ You need to ensure your console is set to 80 x 30 characters, or things will loo
 ## Todo
 - [x] Optimise all the things!! (Nested loops within loops within loops within...)
 - [x] There's code that could be refactored to DRY it up a little
-- [ ] Colour!!
+- [x] Colour!!
 - [ ] Sound effects
 - [ ] Get the high-score working
 - [ ] Get player 2 working

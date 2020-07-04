@@ -4,7 +4,7 @@
 
 void enemy_top::draw(console_screen* screen)
 {
-	screen->plot_char(x_, y_, cur_);
+	screen->draw(x_, y_, cur_, fg_red);
 }
 
 void enemy_top::update(std::vector<game_object*>& game_objects, keyboard* input, float elapsed, game_state& state)

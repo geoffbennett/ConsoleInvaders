@@ -22,7 +22,7 @@ void enemy_bullet::update(std::vector<game_object*>& game_objects, keyboard* inp
 
 void enemy_bullet::draw(console_screen* screen)
 {
-	screen->plot_char(x_, y_, cur_);
+	screen->draw(x_, y_, cur_, fg_yellow);
 }
 
 void enemy_bullet::collided_with(std::vector<game_object*>& game_objects, game_state& state)

@@ -1,21 +1,15 @@
-#include <iostream>
-
 #include "console_screen.h"
 
-#include "Windows.h"
-
-void console_screen::construct_screen()
+console_screen::console_screen(int width, int height, const wchar_t* title)
 {
-	p_screen_ = new wchar_t[n_width_ * n_height_];
-	for (auto i = 0; i < n_width_ * n_height_; i++) p_screen_[i] = L' ';
-	h_screen_ = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, nullptr, CONSOLE_TEXTMODE_BUFFER, nullptr);
-	SetConsoleActiveScreenBuffer(h_screen_);
-	SetConsoleTitle(s_title_);
+	n_width_ = width;
+	n_height_ = height;
+	SetConsoleTitle(title);
 }
 
-void console_screen::construct_buffer()
+console_screen::~console_screen()
 {
-	p_buffer_ = new wchar_t[n_width_ * n_height_];
+	cleanup();
 }
 
 void console_screen::clip(int& x, int& y) const
@@ -27,65 +21,56 @@ void console_screen::clip(int& x, int& y) const
 	if (y > n_height_) y = n_height_ - 1;
 }
 
-console_screen::console_screen(const int width, const int height, const wchar_t* title)
+void console_screen::console_initialise()
 {
-	n_width_ = width;
-	n_height_ = height;
-	s_title_ = title;
-
-	construct_screen();
-	construct_buffer();
-}
-
-console_screen::~console_screen()
-{
-	delete[] p_buffer_;
-	delete[] p_screen_;
-	
-	CloseHandle(h_screen_);
-}
-
-int console_screen::get_width() const
-{
-	return n_width_;
-}
-
-int console_screen::get_height() const
-{
-	return n_height_;
+	h_console_ = GetStdHandle(STD_OUTPUT_HANDLE);
+	r_console_ = { 0, 0, static_cast<short>(n_width_) - 1, static_cast<short>(n_height_) - 1 };
 }
 
 void console_screen::clear() const
 {
-	for (auto i = 0; i < n_width_ * n_height_; i++) p_buffer_[i] = L' ';
+	memset(p_screen_buffer_, 0, sizeof(CHAR_INFO) * n_width_ * n_height_);
 }
 
-void console_screen::flip() const
+void console_screen::initialise()
 {
-	for (auto i = 0; i < n_width_ * n_height_; i++) p_screen_[i] = p_buffer_[i];
+	p_screen_buffer_ = new CHAR_INFO[n_width_ * n_height_];
+	clear();
 }
 
-void console_screen::present() const
+void console_screen::cleanup() const
 {
-	DWORD dw_bytes_written = 0;
-	WriteConsoleOutputCharacter(h_screen_, p_screen_, n_width_ * n_height_, { 0, 0 }, &dw_bytes_written);
+	delete[] p_screen_buffer_;
 }
 
-void console_screen::plot_char(int x, int y, const wchar_t chr) const
+void console_screen::present()
+{
+	WriteConsoleOutput(h_console_, p_screen_buffer_, { static_cast<short>(n_width_), static_cast<short>(n_height_) }, { 0,0 }, &r_console_);
+}
+
+CHAR_INFO* console_screen::peek(const int x, const int y) const
+{
+	return &p_screen_buffer_[y * n_width_ + x];
+}
+
+void console_screen::draw(int x, int y, const short c = 0x2588, const short col = 0x000f) const
 {
 	clip(x, y);
-	p_buffer_[y * n_width_ + x] = chr;
+	p_screen_buffer_[y * n_width_ + x].Char.UnicodeChar = c;
+	p_screen_buffer_[y * n_width_ + x].Attributes = col;
 }
 
-void console_screen::draw_text(int x, int y, const size_t size, const wchar_t* text) const
+void console_screen::draw_text(const int x, const int y, std::wstring c, const short col = 0x000F) const
 {
-	clip(x, y);
-	swprintf_s(&p_buffer_[y * n_width_ + x], size, text);
+	for (size_t i = 0; i < c.size(); i++)
+	{
+		p_screen_buffer_[y * n_width_ + x + i].Char.UnicodeChar = c[i];
+		p_screen_buffer_[y * n_width_ + x + i].Attributes = col;
+	}
 }
 
-void console_screen::draw_text_centered(int y, const size_t size, const wchar_t* text) const
+void console_screen::draw_text_centered(const int y, const std::wstring& c, const short col = 0x000F) const
 {
-	auto left = static_cast<int>(n_width_ - size) / 2;
-	clip(left, y);
-	swprintf_s(&p_buffer_[y * n_width_ + left], size, text);
+	const auto x = (n_width_ - c.size()) / 2;
+	draw_text(x, y, c, col);
 }

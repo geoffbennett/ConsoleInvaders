@@ -33,6 +33,7 @@ auto b_draw_stats_latch = false;
 auto n_high_score = 0;
 auto n_mode = e_mode::intro;
 vector<game_object*> objects;
+auto n_title_colour = 0;
 
 // Bunkers
 const auto n_bunker_y = n_screen_height - 8;
@@ -64,57 +65,11 @@ const wchar_t* msg_object_count = L"Objects:  % 4d";
 
 // === GAME ===
 
-//bool game_enemy_hit_bunker()
-//{
-//	for (auto& bunker : bunkers)
-//	{
-//		for (auto& enemy : enemies)
-//		{
-//			for (auto x = 0; x < n_bunker_width; x++)
-//			{
-//				for (auto y = 0; y < n_bunker_height; y++)
-//				{
-//					if (bunker.shape[y * n_bunker_width + x] != L'.')
-//					{
-//						if ((bunker.x + x == enemy.x) && (bunker.y + y == enemy.y))
-//						{
-//							auto b_hit = false;
-//							switch (bunker.shape[y * n_bunker_width + x])
-//							{
-//							case '4':
-//								bunker.shape[y * n_bunker_width + x] = '3';
-//								b_hit = true;
-//								break;
-//							case '3':
-//								bunker.shape[y * n_bunker_width + x] = '2';
-//								b_hit = true;
-//								break;
-//							case '2':
-//								bunker.shape[y * n_bunker_width + x] = '1';
-//								b_hit = true;
-//								break;
-//							case '1':
-//								bunker.shape[y * n_bunker_width + x] = '0';
-//								b_hit = true;
-//								break;
-//							default:
-//								break;
-//							}
-//							return b_hit;
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
-//	return false;
-//}
-
 void game_draw_ground(console_screen* screen)
 {
 	for (auto i = 0; i < n_screen_width; i++)
 	{
-		screen->plot_char(i, n_screen_height - 2, L'_');
+		screen->draw(i, n_screen_height - 2, L'_', fg_green);
 	}
 }
 
@@ -133,46 +88,76 @@ const wchar_t* game_get_lives_message(game_state& state)
 
 void game_draw_hud(game_state& state, keyboard* input, console_screen* screen)
 {
-	screen->draw_text_centered(n_screen_height - 1, std::wcslen(msg_quit) + 1, msg_quit);
+	screen->draw_text_centered(n_screen_height - 1, msg_quit, fg_dark_grey);
 
 	wchar_t s[80];
-	screen->draw_text(1, 0, std::wcslen(msg_score) + 1, msg_score);
+	screen->draw_text(1, 0, msg_score, fg_white);
 	swprintf_s(s, 5, msg_score_fmt, state.score);
-	screen->draw_text(3, 1, std::wcslen(s) + 1, s);
+	screen->draw_text(3, 1, s, fg_white);
 
-	screen->draw_text_centered(0, std::wcslen(msg_high_score) + 1, msg_high_score);
+	screen->draw_text_centered(0, msg_high_score, fg_white);
 	swprintf_s(s, 5, msg_score_fmt, n_high_score);
-	screen->draw_text_centered(1, 5, s);
+	screen->draw_text_centered(1, s, fg_white);
 
 	if (b_draw_stats)
 	{
-		screen->draw_text(n_screen_width - 6, 0, std::wcslen(msg_key_title) + 1, msg_key_title);
+		screen->draw_text(n_screen_width - 6, 0, msg_key_title, fg_dark_grey);
 		swprintf_s(s, 80, msg_key_state, input->get_key(VK_LEFT).held, input->get_key(VK_RIGHT).held, input->get_key(VK_SPACE).held);
-		screen->draw_text(n_screen_width - 6, 1, 6, s);
+		screen->draw_text(n_screen_width - 6, 1, s, fg_dark_grey);
 		swprintf_s(s, 80, msg_fps, state.fps);
-		screen->draw_text(n_screen_width - 11, 2, 11, s);
+		screen->draw_text(n_screen_width - 11, 2, s, fg_dark_grey);
 		swprintf_s(s, 80, msg_shots, state.player_shots);
-		screen->draw_text(n_screen_width - 13, 3, 13, s);
+		screen->draw_text(n_screen_width - 13, 3, s, fg_dark_grey);
 		swprintf_s(s, 80, msg_killed, state.enemy_kill_count);
-		screen->draw_text(n_screen_width - 13, 4, 13, s);
+		screen->draw_text(n_screen_width - 13, 4, s, fg_dark_grey);
 		swprintf_s(s, 80, msg_speed, state.enemy_speed_mod);
-		screen->draw_text(n_screen_width - 13, 5, 13, s);
+		screen->draw_text(n_screen_width - 13, 5, s, fg_dark_grey);
 		swprintf_s(s, 80, msg_object_count, objects.size());
-		screen->draw_text(n_screen_width - 15, 6, 15, s);
+		screen->draw_text(n_screen_width - 15, 6, s, fg_dark_grey);
 	}
 
 	const auto* lives_msg = game_get_lives_message(state);
-	screen->draw_text(1, n_screen_height - 1, std::wcslen(lives_msg) + 1, lives_msg);
+	screen->draw_text(1, n_screen_height - 1, lives_msg, fg_green);
 }
 
 // === MODES ===
 
 void mode_intro_screen(const float elapsed, keyboard* input, console_screen* screen)
 {
-	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_title) + 1, msg_title);
-	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_why) + 1, msg_why);
-	screen->draw_text_centered((n_screen_height / 2) + 4, std::wcslen(msg_start) + 1, msg_start);
-	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
+	short colour = fg_white;
+
+	switch(n_title_colour)
+	{
+	case 0:
+		colour = fg_blue;
+		n_title_colour = 1;
+		break;
+	case 1:
+		colour = fg_green;
+		n_title_colour = 2;
+		break;
+	case 2:
+		colour = fg_cyan;
+		n_title_colour = 3;
+		break;
+	case 3:
+		colour = fg_red;
+		n_title_colour = 4;
+		break;
+	case 4:
+		colour = fg_magenta;
+		n_title_colour = 5;
+		break;
+	default:
+		colour = fg_yellow;
+		n_title_colour = 0;
+		break;
+	}
+	
+	screen->draw_text_centered((n_screen_height / 2) - 4, msg_title, colour);
+	screen->draw_text_centered((n_screen_height / 2) - 2, msg_why, fg_dark_grey);
+	screen->draw_text_centered((n_screen_height / 2) + 4, msg_start, fg_white);
+	screen->draw_text_centered((n_screen_height - 1), msg_quit, fg_dark_grey);
 	
 	if (input->get_key(VK_RETURN).pressed)
 	{
@@ -182,10 +167,6 @@ void mode_intro_screen(const float elapsed, keyboard* input, console_screen* scr
 
 void mode_game_play(const float elapsed, keyboard* input, console_screen* screen, game_state& state)
 {
-	//game_process_enemies(elapsed);
-	//game_process_enemy_bullet(elapsed);
-
-	//game_draw_enemy_bullets(screen);
 	game_draw_ground(screen);
 
 	objects.erase(std::remove_if(objects.begin(), objects.end(), [](game_object* g) { return g->get_deleted(); }), objects.end());
@@ -207,26 +188,26 @@ void mode_game_play(const float elapsed, keyboard* input, console_screen* screen
 
 void mode_win_screen(const float elapsed, keyboard* input, console_screen* screen, game_state& state)
 {
-	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_won) + 1, msg_won);
-	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
+	screen->draw_text_centered((n_screen_height / 2) - 4, msg_won, fg_white);
+	screen->draw_text_centered((n_screen_height / 2) - 2, msg_score, fg_white);
 
 	wchar_t s[80];
 	swprintf_s(s, 80, msg_score_fmt, state.score);
-	screen->draw_text_centered((n_screen_height / 2) - 1, std::wcslen(s) + 1, s);
+	screen->draw_text_centered((n_screen_height / 2) - 1, s, fg_white);
 	
-	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
+	screen->draw_text_centered((n_screen_height - 1), msg_quit, fg_dark_grey);
 }
 
 void mode_loss_screen(const float elapsed, keyboard* input, console_screen* screen, game_state& state)
 {
-	screen->draw_text_centered((n_screen_height / 2) - 4, std::wcslen(msg_lost) + 1, msg_lost);
-	screen->draw_text_centered((n_screen_height / 2) - 2, std::wcslen(msg_score) + 1, msg_score);
+	screen->draw_text_centered((n_screen_height / 2) - 4, msg_lost, fg_red);
+	screen->draw_text_centered((n_screen_height / 2) - 2, msg_score, fg_red);
 
 	wchar_t s[80];
 	swprintf_s(s, 80, msg_score_fmt, state.score);
-	screen->draw_text_centered((n_screen_height / 2) - 1, std::wcslen(s) + 1, s);
+	screen->draw_text_centered((n_screen_height / 2) - 1, s, fg_red);
 
-	screen->draw_text_centered((n_screen_height - 1), std::wcslen(msg_quit) + 1, msg_quit);
+	screen->draw_text_centered((n_screen_height - 1), msg_quit, fg_dark_grey);
 }
 
 int main()
@@ -236,6 +217,8 @@ int main()
 		auto* const timer = new game_timer();
 		auto* const input = new keyboard();
 		auto* const screen = new console_screen(80, 30, msg_title);
+		screen->console_initialise();
+		screen->initialise();
 		game_state state;
 
 		auto b_quit_game = false;
@@ -298,7 +281,6 @@ int main()
 				break;
 			}
 
-			screen->flip();
 			screen->present();
 
 			timer->frame();
@@ -306,11 +288,14 @@ int main()
 			b_quit_game = input->get_key(VK_ESCAPE).pressed;
 		}
 
+		screen->clear();
+		screen->present();
+
 		for(auto& go : objects)
 		{
 			delete go;
 		}
-		
+
 		// ERROR: Why does this cause a heap corruption?
 		// delete input;
 		delete timer;
