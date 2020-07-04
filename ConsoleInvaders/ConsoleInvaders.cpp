@@ -47,7 +47,6 @@ vector<game_object*> objects;
 
 const short n_chr_player = 0x2569;
 const short n_chr_player_explosion = 0x0023;
-const short n_chr_player_bullet = 0x00b7;
 
 auto n_current_player_chr = n_chr_player;
 
@@ -207,46 +206,11 @@ void game_process_player(const float elapsed, keyboard* input)
 	//if (input->get_key(VK_RIGHT).held) f_player_pos += f_player_speed * elapsed;
 }
 
-void game_enemy_shoot(float elapsed)
-{
-	//n_enemy_shot_wait++;
-	//const auto rand_val = rand() % 14;
-	//if ((rand_val == 11) && !b_enemy_shooting && (n_enemy_shot_wait > n_enemy_shot_reset))
-	//{
-	//	n_enemy_shot_wait = 0;
-	//	b_enemy_shooting = true;
-	//	auto enemy_y = f_player_row;
-	//	enemy shooting_enemy;
-	//	for (const auto enemy : enemies)
-	//	{
-	//		if ((enemy.x > f_player_pos - 5) && (enemy.x < f_player_pos + 5))
-	//		{
-	//			const auto y_test = f_player_row - enemy.y;
-	//			if (y_test < enemy_y)
-	//			{
-	//				enemy_y = y_test;
-	//				shooting_enemy = enemy;
-	//			}
-	//		}
-	//	}
-	//	if ((shooting_enemy.x > 0) && (shooting_enemy.y > 0))
-	//	{
-	//		enemy_bullet b;
-	//		b.x = shooting_enemy.x;
-	//		b.y = shooting_enemy.y + 1.0f;
-	//		b.chr = n_chr_alien_bullet_a;
-	//		enemy_bullets.push_back(b);
-	//	}
-	//}
-}
-
 void game_process_enemy_bullet(const float elapsed)
 {
 	n_enemy_bullet_speed_count++;
 	if (n_enemy_bullet_speed_count <= n_enemy_bullet_speed_delta) return;
 	n_enemy_bullet_speed_count = 0;
-
-	//game_enemy_shoot();
 
 	for (auto& bullet : enemy_bullets)
 	{
@@ -279,28 +243,6 @@ void game_process_enemy_bullet(const float elapsed)
 		//{
 		//	bullet.remove = true;
 		//}
-	}
-}
-
-//void game_process_enemies(const float elapsed)
-//{
-//
-//	if (game_enemy_hit_bunker())
-//	{
-//		b_lost = true;
-//	}
-//
-//	if (b_action_pulse)
-//	{
-//		game_enemy_shoot(elapsed);
-//	}
-//}
-
-void game_draw_enemy_bullets(console_screen* screen)
-{
-	for (const auto bullet : enemy_bullets)
-	{
-		screen->plot_char(bullet.x, bullet.y, bullet.chr);
 	}
 }
 

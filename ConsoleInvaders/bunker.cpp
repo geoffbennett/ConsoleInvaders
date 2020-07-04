@@ -1,5 +1,6 @@
 #include "bunker.h"
 #include "bullet.h"
+#include "enemy_bullet.h"
 
 bunker::bunker(const int x, const int y) : game_object(x, y)
 {
@@ -47,7 +48,7 @@ void bunker::collided_with(std::vector<game_object*>& game_objects, game_state& 
 	for(auto* o : game_objects)
 	{
 		auto* pb = dynamic_cast<bullet*>(o);
-		auto* eb = dynamic_cast<bullet*>(o);
+		auto* eb = dynamic_cast<enemy_bullet*>(o);
 		if (pb != nullptr || eb != nullptr)
 		{
 			const auto bullet_x = o->get_x();
