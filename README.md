@@ -12,7 +12,7 @@ You need to ensure your console is set to 80 x 30 characters, or things will loo
 - [ ] Sound effects
 - [x] Get the high-score working
 - [ ] Get player 2 working
-- [ ] Add the mothership
+- [x] Add the mothership
 - [ ] Add levels with increasing difficulty instead of just "winning"
 - [ ] Automatically size the console correctly
 - [x] Switch to floating point with elapsed time

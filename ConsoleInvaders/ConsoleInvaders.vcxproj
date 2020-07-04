@@ -151,6 +151,7 @@
     <ClCompile Include="game_state.cpp" />
     <ClCompile Include="game_timer.cpp" />
     <ClCompile Include="keyboard.cpp" />
+    <ClCompile Include="mothership.cpp" />
     <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +167,7 @@
     <ClInclude Include="game_state.h" />
     <ClInclude Include="game_timer.h" />
     <ClInclude Include="keyboard.h" />
+    <ClInclude Include="mothership.h" />
     <ClInclude Include="player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

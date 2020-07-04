@@ -14,6 +14,7 @@
 #include "game_state.h"
 #include "game_timer.h"
 #include "keyboard.h"
+#include "mothership.h"
 
 using namespace std;
 
@@ -120,6 +121,25 @@ void game_draw_hud(game_state& state, keyboard* input, console_screen* screen)
 	screen->draw_text(1, n_screen_height - 1, lives_msg, fg_green);
 }
 
+void game_mothership()
+{
+	const auto probability = static_cast<double>(rand()) / RAND_MAX;
+	if (probability <= 0.00005)
+	{
+		auto mothership_present = false;
+		for (auto* o : objects)
+		{
+			auto* ms = dynamic_cast<mothership*>(o);
+			mothership_present = ms != nullptr;
+		}
+		if (!mothership_present)
+		{
+			auto* m = new mothership(0, 3);
+			objects.push_back(m);
+		}
+	}
+}
+
 // === MODES ===
 
 void mode_intro_screen(const float elapsed, keyboard* input, console_screen* screen)
@@ -178,6 +198,7 @@ void mode_game_play(const float elapsed, keyboard* input, console_screen* screen
 		o->draw(screen);
 	}
 
+	game_mothership();
 	game_draw_hud(state, input, screen);
 
 	if (state.lost)
