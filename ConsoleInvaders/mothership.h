@@ -4,7 +4,7 @@
 
 class mothership final : public game_object
 {
-	const float f_speed_ = 20.0f;
+	const float f_speed_ = 15.0f;
 	float f_delta_t_ = 0.0f;
 
 public:
